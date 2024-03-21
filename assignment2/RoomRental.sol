@@ -86,8 +86,9 @@ contract RoomRental {
     }
 
     // renter
-    function viewRoom() public view {
-
+    function viewRoom(uint256 roomId) public view returns (RoomInfo memory){
+        require(roomInfos[roomId].roomId!=0,"Room does not exist!");
+        return roomInfos[roomId];
     }
 
     function rentRoom() public payable {
