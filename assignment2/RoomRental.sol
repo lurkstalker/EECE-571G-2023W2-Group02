@@ -25,26 +25,34 @@ contract RoomRental {
     struct RentalInfo {
         uint256 roomId;
         address renterAddress;
-
         uint256 rentDuration;
-
         bool isValid;
         bool hasConfirmed;
         bool isEnd;
     }
 
+    struct Appointment {
+        uint256 roomId;
+        address renteeAddr; // could be omitted since we could use roomId get the room owner address
+        address renterAddr;
+        uint256 appointmentTime;
+        bool isValid;
+        bool isConfirmed;
+    }
+
+    uint256 private totalAppointments = 0;
     mapping(address => uint256) balances; // address balance
     mapping(uint256 => RoomInfo) public roomInfos; // room information
     mapping(address => User) users; // user information
     mapping(address => RentalInfo) rental_renter; // each address can only rent one room at one time
-    mapping(uint256 => RentalInfo) rental_room; // room id -> rental info 
+    mapping(uint256 => RentalInfo) rental_room; // room id -> rental info
+    mapping(uint256 => Appointment) public appointments; // Appointment ID -> Appointment info system could know all the appointments
 
-    constructor() {
+    constructor() {}
 
-    }
     // -- account
     function SignUp(string memory userName, string memory password) public {
-        require(!users[msg.sender].isValid , "Account already exists");
+        require(!users[msg.sender].isValid, "Account already exists");
         require(bytes(userName).length > 0, "Please enter a name");
         require(bytes(password).length > 0, "Please enter a password");
         users[msg.sender].userName = userName;
@@ -56,8 +64,11 @@ contract RoomRental {
     function Login(string memory password) public {
         User memory u = users[msg.sender];
         require(u.loggedIn == false, "You have logged in");
-        require(keccak256(abi.encodePacked(u.password)) ==
-            keccak256(abi.encodePacked(password)), "Incorrect password");
+        require(
+            keccak256(abi.encodePacked(u.password)) ==
+                keccak256(abi.encodePacked(password)),
+            "Incorrect password"
+        );
         users[msg.sender].loggedIn = true;
     }
 
@@ -67,7 +78,11 @@ contract RoomRental {
 
     // rentee
 
-    function addRoom(string memory roomLocation, string memory roomIntro, uint256 price) public {
+    function addRoom(
+        string memory roomLocation,
+        string memory roomIntro,
+        uint256 price
+    ) public {
         require(bytes(roomLocation).length > 0, "Please input valid location");
         require(bytes(roomIntro).length > 0, "Please input valid info");
         totalRoomNum += 1;
@@ -83,6 +98,80 @@ contract RoomRental {
         roomInfos[totalRoomNum] = rmInfo;
     }
 
+    modifier onlyNonOwner(address payable owner) {
+        require(msg.sender != owner, "Only non-owner can call this function.");
+        _;
+    }
+
+    // Function to make an appointment
+    function makeAppointment(uint256 _roomId, uint256 _appointmentTime) public {
+        // Check that the room exists and is available
+        require(_roomId > 0 && _roomId <= totalRoomNum, "Room does not exist");
+        RoomInfo storage room = roomInfos[_roomId];
+        require(room.isAvailable, "Room is not available");
+
+        // Check that the caller is a registered user and not the owner of the room
+        User storage user = users[msg.sender];
+        require(
+            user.isValid && user.loggedIn,
+            "Must be a logged in user to make an appointment"
+        );
+        // To-do this might be a modifer
+        require(
+            msg.sender != room.owner,
+            "Owner cannot make an appointment for their own room"
+        );
+
+        // Increment totalAppointments and create a new appointment
+        totalAppointments += 1;
+        // Check if there is already an appointment for this room
+        require(
+            !appointments[_roomId].isValid,
+            "Appointment already exists for this room"
+        );
+        appointments[_roomId] = Appointment({
+            roomId: _roomId,
+            renteeAddr: room.owner,
+            renterAddr: msg.sender,
+            appointmentTime: _appointmentTime,
+            isValid: true,
+            isConfirmed: false // Initially, appointments are not confirmed
+        });
+
+        // Optionally, emit an event here for the new appointment
+    }
+
+    // Function for the rentee (room owner) to confirm an appointment
+    function confirmAppointment(uint256 _appointmentId) public {
+        // Ensure the appointment exists and is for one of the caller's rooms
+        Appointment storage appointment = appointments[_appointmentId];
+        require(appointment.roomId > 0, "Appointment does not exist");
+        require(
+            roomInfos[appointment.roomId].owner == msg.sender,
+            "Caller is not the owner of the room"
+        );
+
+        // Confirm the appointment
+        appointment.isConfirmed = true;
+
+        // Todo - Optionally, emit an event here for the appointment confirmation
+    }
+
+    // Getter function for appointment details
+    function getAppointmentDetails(
+        uint256 _appointmentId
+    ) public view returns (Appointment memory) {
+        Appointment storage appointment = appointments[_appointmentId];
+
+        // Ensure that the function caller is either the renter or the rentee of the appointment
+        require(
+            msg.sender == appointment.renteeAddr ||
+                msg.sender == appointment.renteeAddr,
+            "Caller must be renter or rentee of the appointment"
+        );
+
+        return appointment;
+        
     function topUp() public {
         // topup rentee balance
         payable(msg.sender).transfer(balances[msg.sender]);
