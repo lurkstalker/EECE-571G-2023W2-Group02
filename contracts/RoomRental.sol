@@ -171,25 +171,35 @@ contract RoomRental {
         );
 
         return appointment;
-        
-    function topUp() public {
-        // topup rentee balance
+    }
+
+    function withdrawDeposit() public {
+        // withdraw Deposit for rentee balance
         payable(msg.sender).transfer(balances[msg.sender]);
         balances[msg.sender] = 0;
     }
 
     // renter
-    function viewRoom(uint256 roomId) public view returns (RoomInfo memory){
-        require(roomInfos[roomId].roomId!=0,"Room does not exist!");
+    function viewRoom(uint256 roomId) public view returns (RoomInfo memory) {
+        require(roomInfos[roomId].roomId != 0, "Room does not exist!");
         return roomInfos[roomId];
     }
 
     function rentRoom(uint256 roomId, uint256 duration) public payable {
         RoomInfo memory curRoomInfo = roomInfos[roomId];
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
-        require(curRoomInfo.isAvailable == true, "Please input a valid room id");
-        require(rentalInfo.isEnd == true || rentalInfo.isValid == false, "You already have a rental");
-        require(msg.value == duration * curRoomInfo.price, "Plase pay the rent!");
+        require(
+            curRoomInfo.isAvailable == true,
+            "Please input a valid room id"
+        );
+        require(
+            rentalInfo.isEnd == true || rentalInfo.isValid == false,
+            "You already have a rental"
+        );
+        require(
+            msg.value == duration * curRoomInfo.price,
+            "Plase pay the rent!"
+        );
 
         rentalInfo.roomId = roomId;
         rentalInfo.renterAddress = msg.sender;
@@ -200,15 +210,18 @@ contract RoomRental {
         roomInfos[roomId].isAvailable = false;
 
         rental_renter[msg.sender] = rentalInfo;
-        rental_room[roomId] = rentalInfo; 
+        rental_room[roomId] = rentalInfo;
     }
 
     function refundRoom() public {
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         RoomInfo memory roomInfo = roomInfos[rentalInfo.roomId];
         require(rentalInfo.isValid == true, "You do not have a rental yet");
-        require(rentalInfo.hasConfirmed == false, "The rent has been confirmed");
-        
+        require(
+            rentalInfo.hasConfirmed == false,
+            "The rent has been confirmed"
+        );
+
         payable(msg.sender).transfer(rentalInfo.rentDuration * roomInfo.price);
         rentalInfo.isValid = false;
         rental_renter[msg.sender] = rentalInfo;
@@ -223,13 +236,16 @@ contract RoomRental {
         RoomInfo memory roomInfo = roomInfos[rentalInfo.roomId];
 
         require(rentalInfo.isValid == true, "You do not have a rental yet");
-        require(rentalInfo.hasConfirmed == false, "The rent has been confirmed");
+        require(
+            rentalInfo.hasConfirmed == false,
+            "The rent has been confirmed"
+        );
 
         rentalInfo.hasConfirmed = true;
         balances[roomInfo.owner] += rentalInfo.rentDuration * roomInfo.price;
 
         rental_renter[msg.sender] = rentalInfo;
-        rental_room[rentalInfo.roomId] = rentalInfo;    
+        rental_room[rentalInfo.roomId] = rentalInfo;
     }
 
     function moveOut() public {
@@ -249,4 +265,26 @@ contract RoomRental {
     }
 
     // getter for test
+
+    // Getter for Room information
+    function getRoomLocation(
+        uint256 roomId
+    ) public view returns (string memory) {
+        return roomInfos[roomId].location;
+    }
+
+    function getRoomIntro(uint256 roomId) public view returns (string memory) {
+        return roomInfos[roomId].intro;
+    }
+
+    function getRoomPrice(uint256 roomId) public view returns (uint256) {
+        return roomInfos[roomId].price;
+    }
+
+    // Getter for Appointment information
+    function isAppointmentAvaliable(
+        uint256 roomId
+    ) public view returns (uint256) {
+        return roomInfos[roomId].price;
+    }
 }
