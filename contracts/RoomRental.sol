@@ -36,7 +36,8 @@ contract RoomRental {
     }
 
     uint256 constant monthlyRentPrice = 1e17;
-    uint256 private totalRoomNum = 0;
+    uint256 private nextAvaiRoomId = 0;
+    uint256 private totalRoomCount = 0;
 
     mapping(address => uint256) balances; // address balance
     mapping(uint256 => RoomInfo) public roomInfos; // room information
@@ -70,7 +71,7 @@ contract RoomRental {
 
     modifier onlyValidRoomId(uint256 roomId) {
         // Check that the room exists and is available
-        require(roomId > 0 && roomId <= totalRoomNum, "Room does not exist");
+        require(roomId > 0 && roomId <= nextAvaiRoomId, "Room does not exist");
         _;
     }
 
@@ -111,9 +112,10 @@ contract RoomRental {
     ) public checkLogin {
         require(bytes(roomLocation).length > 0, "Please input valid location");
         require(bytes(roomIntro).length > 0, "Please input valid info");
-        totalRoomNum++;
-        roomInfos[totalRoomNum] = RoomInfo({
-            roomId: totalRoomNum,
+        nextAvaiRoomId++;
+        totalRoomCount++;
+        roomInfos[nextAvaiRoomId] = RoomInfo({
+            roomId: nextAvaiRoomId,
             location: roomLocation,
             intro: roomIntro,
             isAvailable: true,
@@ -134,10 +136,11 @@ contract RoomRental {
             "There must be no active appointments for the room."
         );
         delete roomInfos[roomId]; // Delete the room information
-        // Update totalRoomNum if the deleted room was the last in the mapping
-        if (roomId == totalRoomNum) {
-            totalRoomNum--;
+        // Update nextAvaiRoomId if the deleted room was the last in the mapping
+        if (roomId == nextAvaiRoomId) {
+            nextAvaiRoomId--;
         }
+        totalRoomCount--;
     }
 
     // Function to make an appointment
@@ -272,7 +275,6 @@ contract RoomRental {
             rentalInfo.hasConfirmed == false,
             "The rent has been confirmed"
         );
-        //! only after rent being confirmed is the rent paid! Need to pay in rentRoom function
 
         payable(msg.sender).transfer(
             rentalInfo.rentDuration * roomInfo.monthPrice
@@ -307,7 +309,7 @@ contract RoomRental {
     }
 
     function getTotalRoomCount() public view returns (uint256) {
-        return totalRoomNum;
+        return totalRoomCount;
     }
 
     // Getter for Appointment information
@@ -315,7 +317,7 @@ contract RoomRental {
     function checkAppointmentStatus(
         uint256 roomId
     ) public view checkLogin returns (bool) {
-        require(roomId > 0 && roomId <= totalRoomNum, "Room does not exist");
+        require(roomId > 0 && roomId <= nextAvaiRoomId, "Room does not exist");
         Appointment memory appointment = appointments[roomId];
         require(
             msg.sender == appointment.renteeAddr ||
