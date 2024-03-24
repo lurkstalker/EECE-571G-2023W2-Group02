@@ -174,7 +174,7 @@ contract RoomRental {
         // Ensure that the function caller is either the renter or the rentee of the appointment
         require(
             msg.sender == appointment.renteeAddr ||
-                msg.sender == appointment.renteeAddr,
+                msg.sender == appointment.renterAddr,
             "Caller must be renter or rentee of the appointment"
         );
 
