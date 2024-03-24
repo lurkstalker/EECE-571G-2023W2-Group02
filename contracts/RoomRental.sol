@@ -50,6 +50,11 @@ contract RoomRental {
 
     constructor() {}
 
+    modifier check_login() {
+        require(users[msg.sender].loggedIn == true,"You need to log in first!");
+        _;
+    }
+
     // -- account
     function SignUp(string memory userName, string memory password) public {
         require(!users[msg.sender].isValid, "Account already exists");
@@ -84,7 +89,7 @@ contract RoomRental {
         string memory roomLocation,
         string memory roomIntro,
         uint256 price
-    ) public {
+    ) public check_login{
         require(bytes(roomLocation).length > 0, "Please input valid location");
         require(bytes(roomIntro).length > 0, "Please input valid info");
         totalRoomNum += 1;
@@ -106,7 +111,7 @@ contract RoomRental {
     }
 
     // Function to make an appointment
-    function makeAppointment(uint256 _roomId, uint256 _appointmentTime) public {
+    function makeAppointment(uint256 _roomId, uint256 _appointmentTime) public check_login{
         // Check that the room exists and is available
         require(_roomId > 0 && _roomId <= totalRoomNum, "Room does not exist");
         RoomInfo storage room = roomInfos[_roomId];
@@ -144,7 +149,8 @@ contract RoomRental {
     }
 
     // Function for the rentee (room owner) to confirm an appointment
-    function confirmAppointment(uint256 _appointmentId) public {
+    // input _appintmentId is actually roomid
+    function confirmAppointment(uint256 _appointmentId) public check_login{
         // Ensure the appointment exists and is for one of the caller's rooms
         Appointment storage appointment = appointments[_appointmentId];
         require(appointment.roomId > 0, "Appointment does not exist");
@@ -162,13 +168,13 @@ contract RoomRental {
     // Getter function for appointment details
     function getAppointmentDetails(
         uint256 _appointmentId
-    ) public view returns (Appointment memory) {
+    ) public check_login view returns (Appointment memory) {
         Appointment storage appointment = appointments[_appointmentId];
 
         // Ensure that the function caller is either the renter or the rentee of the appointment
         require(
             msg.sender == appointment.renteeAddr ||
-                msg.sender == appointment.renteeAddr,
+                msg.sender == appointment.renterAddr,
             "Caller must be renter or rentee of the appointment"
         );
 
@@ -187,7 +193,7 @@ contract RoomRental {
         return roomInfos[roomId];
     }
 
-    function rentRoom(uint256 roomId, uint256 duration) public payable {
+    function rentRoom(uint256 roomId, uint256 duration) public check_login payable {
         RoomInfo memory curRoomInfo = roomInfos[roomId];
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         require(
@@ -215,7 +221,7 @@ contract RoomRental {
         rental_room[roomId] = rentalInfo;
     }
 
-    function refundRoom() public {
+    function refundRoom() public check_login{
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         RoomInfo memory roomInfo = roomInfos[rentalInfo.roomId];
         require(rentalInfo.isValid == true, "You do not have a rental yet");
@@ -233,7 +239,7 @@ contract RoomRental {
         roomInfos[rentalInfo.roomId] = roomInfo;
     }
 
-    function moveIn() public {
+    function moveIn() public check_login{
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         RoomInfo memory roomInfo = roomInfos[rentalInfo.roomId];
 
@@ -250,7 +256,7 @@ contract RoomRental {
         rental_room[rentalInfo.roomId] = rentalInfo;
     }
 
-    function moveOut() public {
+    function moveOut() public check_login{
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         RoomInfo memory roomInfo = roomInfos[rentalInfo.roomId];
 
@@ -284,9 +290,12 @@ contract RoomRental {
     }
 
     // Getter for Appointment information
-    function isAppointmentAvaliable(
+    // only check isValid, not sure what to do with isConfirmed
+    function isAppointmentAvaliable (
         uint256 roomId
-    ) public view returns (uint256) {
-        return roomInfos[roomId].price;
+    ) public check_login view returns (bool) {
+        require(roomId > 0 && roomId <= totalRoomNum, "Room does not exist");
+        Appointment memory appointment = appointments[roomId];
+        return appointment.isValid;
     }
 }
