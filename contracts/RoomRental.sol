@@ -302,11 +302,16 @@ contract RoomRental {
 
     // Getter for Appointment information
     // only check isValid, not sure what to do with isConfirmed
-    function isAppointmentAvaliable(
+    function checkAppointmentStatus(
         uint256 roomId
     ) public view check_login returns (bool) {
         require(roomId > 0 && roomId <= totalRoomNum, "Room does not exist");
         Appointment memory appointment = appointments[roomId];
+        require(
+            msg.sender == appointment.renteeAddr ||
+                msg.sender == appointment.renterAddr,
+            "User must be renter or rentee of the appointment"
+        );
         return appointment.isValid;
     }
 }
