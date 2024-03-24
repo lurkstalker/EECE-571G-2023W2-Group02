@@ -166,7 +166,10 @@ contract RoomRental {
     function deleteAppointment(
         uint256 roomId
     ) public checkLogin onlyValidRoomId(roomId) {
-        require(appointments[roomId].isValid,"No Appointment existed for this room");
+        require(
+            appointments[roomId].isValid,
+            "No Appointment existed for this room"
+        );
         delete appointments[roomId]; // Delete the appointments information
     }
 
@@ -206,7 +209,7 @@ contract RoomRental {
         );
         require(
             msg.value == duration * curRoomInfo.monthPrice,
-            "Plase pay the rent!"
+            "Plase pay the correct rent!"
         );
 
         rentalInfo.roomId = roomId;
@@ -214,6 +217,7 @@ contract RoomRental {
         rentalInfo.isValid = true;
         rentalInfo.hasConfirmed = false;
         rentalInfo.isEnd = false;
+        rentalInfo.rentDuration = duration;
 
         // With trustiness, we will mark the room to be unavailable
         roomInfos[roomId].isAvailable = false;
@@ -319,5 +323,22 @@ contract RoomRental {
             "User must be renter or rentee of the appointment"
         );
         return appointment.isValid;
+    }
+
+    function isRentalRoomConfirmed(uint256 roomId) public view returns (bool) {
+        return rental_room[roomId].hasConfirmed;
+    }
+
+    function isRentalRoomEnded(uint256 roomId) public view returns (bool) {
+        return rental_room[roomId].isEnd;
+    }
+
+    function isRentalRoomValid(uint256 roomId) public view returns (bool) {
+        return rental_room[roomId].isValid;
+    }
+
+
+    function getUserBalance() public view returns (uint256) {
+        return balances[msg.sender];
     }
 }
