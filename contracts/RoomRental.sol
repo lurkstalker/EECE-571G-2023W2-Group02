@@ -287,7 +287,15 @@ contract RoomRental {
         roomInfos[rentalInfo.roomId] = roomInfo;
     }
 
-    // getter for test
+    // getter for user info
+    function getLoginStatus() public view returns(bool) {
+        return users[msg.sender].loggedIn;
+    }
+
+    function getSignUpStatus() public view returns(bool) {
+        return users[msg.sender].isValid;
+    }
+
 
     // Getter for Room information
     function getRoomLocation(

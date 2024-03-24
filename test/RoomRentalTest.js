@@ -17,6 +17,29 @@ describe("RoomRental contract", function () {
         roomRental = await roomRentalSystem.deploy();
     });
 
+    it("User can only sign up if he hasn't done it before", async function () {
+        expect(await roomRental.connect(rentee).getSignUpStatus()).to.equal(false);
+        await roomRental.connect(rentee).userSignUp("alex", "12345");
+        expect(await roomRental.connect(rentee).getSignUpStatus()).to.equal(true);
+        expect(roomRental.connect(rentee).userSignUp("tim", "344565")).to.be.revertedWith("Account already exists");
+    });
+
+    it("User can only log in with correct password", async function () {
+        await roomRental.connect(rentee).userSignUp("alex", "12345");
+        expect(roomRental.connect(rentee).userLogin("2345")).to.be.revertedWith("Incorrect password");
+        expect(await roomRental.connect(rentee).getLoginStatus()).to.equal(false);
+        await roomRental.connect(rentee).userLogin("12345");
+        expect(await roomRental.connect(rentee).getLoginStatus()).to.equal(true);
+    });
+
+    it("User is able to log out", async function () {
+        await roomRental.connect(rentee).userSignUp("alex", "12345");
+        await roomRental.connect(rentee).userLogin("12345");        
+        expect(await roomRental.connect(rentee).getLoginStatus()).to.equal(true);
+        await roomRental.connect(rentee).userLogout();
+        expect(await roomRental.connect(rentee).getLoginStatus()).to.equal(false);
+    });
+
     it("Rentee should be able to add a room", async function () {
         await roomRental.connect(rentee).userSignUp("alex", "12345");
         await roomRental.connect(rentee).userLogin("12345");
