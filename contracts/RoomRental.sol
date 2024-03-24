@@ -36,7 +36,6 @@ contract RoomRental {
     }
 
     uint256 constant monthlyRentPrice = 1e17;
-    uint256 private totalAppointments = 0;
     uint256 private totalRoomNum = 0;
 
     mapping(address => uint256) balances; // address balance
@@ -155,13 +154,20 @@ contract RoomRental {
             msg.sender != room.owner,
             "Room owner cannot make an appointment himself/herself"
         );
-        totalAppointments += 1;
         appointments[roomId] = Appointment({
             roomId: roomId,
             renteeAddr: room.owner,
             renterAddr: msg.sender,
             isValid: true
         });
+    }
+
+    // Function to delete an appointment
+    function deleteAppointment(
+        uint256 roomId
+    ) public checkLogin onlyValidRoomId(roomId) {
+        require(appointments[roomId].isValid,"No Appointment existed for this room");
+        delete appointments[roomId]; // Delete the appointments information
     }
 
     // Getter function for appointment details
@@ -290,6 +296,14 @@ contract RoomRental {
 
     function getRoomPrice(uint256 roomId) public view returns (uint256) {
         return roomInfos[roomId].monthPrice;
+    }
+
+    function isRoomAvailable(uint256 roomId) public view returns (bool) {
+        return roomInfos[roomId].isAvailable;
+    }
+
+    function getTotalRoomCount() public view returns (uint256) {
+        return totalRoomNum;
     }
 
     // Getter for Appointment information
