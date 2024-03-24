@@ -16,8 +16,8 @@ describe("RoomRental contract", function () {
     });
 
     it("Rentee should be able to add a room", async function () {
-        await roomRental.connect(rentee).SignUp("alex", "12345");
-        await roomRental.connect(rentee).Login("12345");
+        await roomRental.connect(rentee).userSignUp("alex", "12345");
+        await roomRental.connect(rentee).userLogin("12345");
         await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
         expect(await roomRental.connect(rentee).getRoomLocation(1)).to.equal("Downtown");
         expect(await roomRental.connect(rentee).getRoomIntro(1)).to.equal("Nice view");
@@ -27,10 +27,10 @@ describe("RoomRental contract", function () {
     });
 
     it("Renter can make an appointment if the room is available", async function () {
-        await roomRental.connect(rentee).SignUp("alex", "12345");
-        await roomRental.connect(rentee).Login("12345");
-        await roomRental.connect(renter).SignUp("tim", "6789");
-        await roomRental.connect(renter).Login("6789");
+        await roomRental.connect(rentee).userSignUp("alex", "12345");
+        await roomRental.connect(rentee).userLogin("12345");
+        await roomRental.connect(renter).userSignUp("tim", "6789");
+        await roomRental.connect(renter).userLogin("6789");
         await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
         const appointmentTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now in seconds
         await roomRental.connect(renter).makeAppointment(1, appointmentTime);
@@ -38,17 +38,17 @@ describe("RoomRental contract", function () {
     });
 
     it("Should not allow making an appointment if the room does not exist", async function () {
-        await roomRental.connect(renter).SignUp("tim", "6789");
-        await roomRental.connect(renter).Login("6789");
+        await roomRental.connect(renter).userSignUp("tim", "6789");
+        await roomRental.connect(renter).userLogin("6789");
         const appointmentTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now in seconds
         await expect(roomRental.connect(renter).makeAppointment(1, appointmentTime)).to.be.revertedWith("Room does not exist");
     });
 
     it("Rentee and renter can view the status of an appointment", async function () {
-        await roomRental.connect(rentee).SignUp("alex", "12345");
-        await roomRental.connect(rentee).Login("12345");
-        await roomRental.connect(renter).SignUp("tim", "6789");
-        await roomRental.connect(renter).Login("6789");
+        await roomRental.connect(rentee).userSignUp("alex", "12345");
+        await roomRental.connect(rentee).userLogin("12345");
+        await roomRental.connect(renter).userSignUp("tim", "6789");
+        await roomRental.connect(renter).userLogin("6789");
         await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
         const appointmentTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now in seconds
         await roomRental.connect(renter).makeAppointment(1, appointmentTime);
@@ -61,10 +61,10 @@ describe("RoomRental contract", function () {
     });
 
     it("Should not allow making an appointment if one already exists for the room", async function () {
-        await roomRental.connect(rentee).SignUp("alex", "12345");
-        await roomRental.connect(rentee).Login("12345");
-        await roomRental.connect(renter).SignUp("tim", "6789");
-        await roomRental.connect(renter).Login("6789");
+        await roomRental.connect(rentee).userSignUp("alex", "12345");
+        await roomRental.connect(rentee).userLogin("12345");
+        await roomRental.connect(renter).userSignUp("tim", "6789");
+        await roomRental.connect(renter).userLogin("6789");
         await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
         const appointmentTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now in seconds
         await roomRental.connect(renter).makeAppointment(1, appointmentTime);
