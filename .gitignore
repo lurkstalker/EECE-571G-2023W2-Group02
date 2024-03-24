@@ -397,4 +397,8 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+# Cahce folder
 cache/
+
+# Lock json file
+package-lock.json

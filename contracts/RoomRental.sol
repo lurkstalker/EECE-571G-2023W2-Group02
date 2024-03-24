@@ -2,22 +2,19 @@
 pragma solidity ^0.8.0;
 
 contract RoomRental {
-    uint256 constant price = 1e17;
-    uint256 private totalRoomNum = 0;
-
     struct RoomInfo {
-        bool isAvailable;
+        uint256 roomId;
         string location;
         string intro;
-        uint256 roomId;
-        uint256 price; // monthly payment
+        bool isAvailable;
+        uint256 monthPrice;
         address owner;
     }
 
     struct User {
+        address payable userAddress;
         string userName;
         bytes32 passwordHash;
-        address payable userAddress;
         bool loggedIn;
         bool isValid;
     }
@@ -40,7 +37,10 @@ contract RoomRental {
         bool isConfirmed;
     }
 
+    uint256 constant monthlyRentPrice = 1e17;
     uint256 private totalAppointments = 0;
+    uint256 private totalRoomNum = 0;
+
     mapping(address => uint256) balances; // address balance
     mapping(uint256 => RoomInfo) public roomInfos; // room information
     mapping(address => User) users; // user information
@@ -51,12 +51,15 @@ contract RoomRental {
     constructor() {}
 
     modifier check_login() {
-        require(users[msg.sender].loggedIn == true,"You need to log in first!");
+        require(
+            users[msg.sender].loggedIn == true,
+            "You need to log in first!"
+        );
         _;
     }
 
     // -- account
-    function SignUp(string memory userName, string memory password) public {
+    function userSignUp(string memory userName, string memory password) public {
         require(!users[msg.sender].isValid, "Account already exists");
         require(bytes(userName).length > 0, "Please enter a name");
         require(bytes(password).length > 0, "Please enter a password");
@@ -69,7 +72,7 @@ contract RoomRental {
         });
     }
 
-    function Login(string memory password) public {
+    function userLogin(string memory password) public {
         User memory user = users[msg.sender];
         require(user.loggedIn == false, "You have logged in");
         require(
@@ -79,7 +82,7 @@ contract RoomRental {
         users[msg.sender].loggedIn = true;
     }
 
-    function Logout() public {
+    function userLogout() public check_login {
         users[msg.sender].loggedIn = false;
     }
 
@@ -88,21 +91,19 @@ contract RoomRental {
     function addRoom(
         string memory roomLocation,
         string memory roomIntro,
-        uint256 price
-    ) public check_login{
+        uint256 roomMonthPrice
+    ) public check_login {
         require(bytes(roomLocation).length > 0, "Please input valid location");
         require(bytes(roomIntro).length > 0, "Please input valid info");
         totalRoomNum += 1;
-        RoomInfo memory rmInfo;
-
-        rmInfo.location = roomLocation;
-        rmInfo.intro = roomIntro;
-        rmInfo.isAvailable = true;
-        rmInfo.price = price;
-        rmInfo.owner = msg.sender;
-        rmInfo.roomId = totalRoomNum;
-
-        roomInfos[totalRoomNum] = rmInfo;
+        roomInfos[totalRoomNum] = RoomInfo({
+            roomId: totalRoomNum,
+            location: roomLocation,
+            intro: roomIntro,
+            isAvailable: true,
+            monthPrice: roomMonthPrice,
+            owner: msg.sender
+        });
     }
 
     modifier onlyNonOwner(address payable owner) {
@@ -111,7 +112,10 @@ contract RoomRental {
     }
 
     // Function to make an appointment
-    function makeAppointment(uint256 _roomId, uint256 _appointmentTime) public check_login{
+    function makeAppointment(
+        uint256 _roomId,
+        uint256 _appointmentTime
+    ) public check_login {
         // Check that the room exists and is available
         require(_roomId > 0 && _roomId <= totalRoomNum, "Room does not exist");
         RoomInfo storage room = roomInfos[_roomId];
@@ -150,7 +154,7 @@ contract RoomRental {
 
     // Function for the rentee (room owner) to confirm an appointment
     // input _appintmentId is actually roomid
-    function confirmAppointment(uint256 _appointmentId) public check_login{
+    function confirmAppointment(uint256 _appointmentId) public check_login {
         // Ensure the appointment exists and is for one of the caller's rooms
         Appointment storage appointment = appointments[_appointmentId];
         require(appointment.roomId > 0, "Appointment does not exist");
@@ -168,7 +172,7 @@ contract RoomRental {
     // Getter function for appointment details
     function getAppointmentDetails(
         uint256 _appointmentId
-    ) public check_login view returns (Appointment memory) {
+    ) public view check_login returns (Appointment memory) {
         Appointment storage appointment = appointments[_appointmentId];
 
         // Ensure that the function caller is either the renter or the rentee of the appointment
@@ -193,7 +197,10 @@ contract RoomRental {
         return roomInfos[roomId];
     }
 
-    function rentRoom(uint256 roomId, uint256 duration) public check_login payable {
+    function rentRoom(
+        uint256 roomId,
+        uint256 duration
+    ) public payable check_login {
         RoomInfo memory curRoomInfo = roomInfos[roomId];
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         require(
@@ -205,7 +212,7 @@ contract RoomRental {
             "You already have a rental"
         );
         require(
-            msg.value == duration * curRoomInfo.price,
+            msg.value == duration * curRoomInfo.monthPrice,
             "Plase pay the rent!"
         );
 
@@ -221,7 +228,7 @@ contract RoomRental {
         rental_room[roomId] = rentalInfo;
     }
 
-    function refundRoom() public check_login{
+    function refundRoom() public check_login {
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         RoomInfo memory roomInfo = roomInfos[rentalInfo.roomId];
         require(rentalInfo.isValid == true, "You do not have a rental yet");
@@ -230,7 +237,9 @@ contract RoomRental {
             "The rent has been confirmed"
         );
 
-        payable(msg.sender).transfer(rentalInfo.rentDuration * roomInfo.price);
+        payable(msg.sender).transfer(
+            rentalInfo.rentDuration * roomInfo.monthPrice
+        );
         rentalInfo.isValid = false;
         rental_renter[msg.sender] = rentalInfo;
         rental_room[rentalInfo.roomId] = rentalInfo;
@@ -239,7 +248,7 @@ contract RoomRental {
         roomInfos[rentalInfo.roomId] = roomInfo;
     }
 
-    function moveIn() public check_login{
+    function moveIn() public check_login {
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         RoomInfo memory roomInfo = roomInfos[rentalInfo.roomId];
 
@@ -250,13 +259,15 @@ contract RoomRental {
         );
 
         rentalInfo.hasConfirmed = true;
-        balances[roomInfo.owner] += rentalInfo.rentDuration * roomInfo.price;
+        balances[roomInfo.owner] +=
+            rentalInfo.rentDuration *
+            roomInfo.monthPrice;
 
         rental_renter[msg.sender] = rentalInfo;
         rental_room[rentalInfo.roomId] = rentalInfo;
     }
 
-    function moveOut() public check_login{
+    function moveOut() public check_login {
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
         RoomInfo memory roomInfo = roomInfos[rentalInfo.roomId];
 
@@ -286,14 +297,14 @@ contract RoomRental {
     }
 
     function getRoomPrice(uint256 roomId) public view returns (uint256) {
-        return roomInfos[roomId].price;
+        return roomInfos[roomId].monthPrice;
     }
 
     // Getter for Appointment information
     // only check isValid, not sure what to do with isConfirmed
-    function isAppointmentAvaliable (
+    function isAppointmentAvaliable(
         uint256 roomId
-    ) public check_login view returns (bool) {
+    ) public view check_login returns (bool) {
         require(roomId > 0 && roomId <= totalRoomNum, "Room does not exist");
         Appointment memory appointment = appointments[roomId];
         return appointment.isValid;
