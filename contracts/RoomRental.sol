@@ -16,7 +16,7 @@ contract RoomRental {
 
     struct User {
         string userName;
-        string password;
+        bytes32 passwordHash;
         address payable userAddress;
         bool loggedIn;
         bool isValid;
@@ -55,18 +55,20 @@ contract RoomRental {
         require(!users[msg.sender].isValid, "Account already exists");
         require(bytes(userName).length > 0, "Please enter a name");
         require(bytes(password).length > 0, "Please enter a password");
-        users[msg.sender].userName = userName;
-        users[msg.sender].password = password; // todo encrypt pwd
-        users[msg.sender].userAddress = payable(msg.sender);
-        users[msg.sender].isValid = true;
+        users[msg.sender] = User({
+            userName: userName,
+            passwordHash: keccak256(abi.encodePacked(password)),
+            userAddress: payable(msg.sender),
+            isValid: true,
+            loggedIn: false
+        });
     }
 
     function Login(string memory password) public {
-        User memory u = users[msg.sender];
-        require(u.loggedIn == false, "You have logged in");
+        User memory user = users[msg.sender];
+        require(user.loggedIn == false, "You have logged in");
         require(
-            keccak256(abi.encodePacked(u.password)) ==
-                keccak256(abi.encodePacked(password)),
+            user.passwordHash == keccak256(abi.encodePacked(password)),
             "Incorrect password"
         );
         users[msg.sender].loggedIn = true;
