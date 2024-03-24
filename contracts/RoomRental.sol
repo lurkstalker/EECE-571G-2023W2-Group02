@@ -149,6 +149,7 @@ contract RoomRental {
     }
 
     // Function for the rentee (room owner) to confirm an appointment
+    // input _appintmentId is actually roomid
     function confirmAppointment(uint256 _appointmentId) public check_login{
         // Ensure the appointment exists and is for one of the caller's rooms
         Appointment storage appointment = appointments[_appointmentId];
@@ -289,9 +290,12 @@ contract RoomRental {
     }
 
     // Getter for Appointment information
-    function isAppointmentAvaliable(
+    // only check isValid, not sure what to do with isConfirmed
+    function isAppointmentAvaliable (
         uint256 roomId
-    ) public view returns (uint256) {
-        return roomInfos[roomId].price;
+    ) public check_login view returns (bool) {
+        require(roomId > 0 && roomId <= totalRoomNum, "Room does not exist");
+        Appointment memory appointment = appointments[roomId];
+        return appointment.isValid;
     }
 }
