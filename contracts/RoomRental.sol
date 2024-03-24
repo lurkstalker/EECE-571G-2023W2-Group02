@@ -143,8 +143,7 @@ contract RoomRental {
 
     // Function to make an appointment
     function makeAppointment(
-        uint256 roomId,
-        uint256 appointmentTime
+        uint256 roomId
     ) public checkLogin onlyValidRoomId(roomId) {
         require(
             !appointments[roomId].isValid,
@@ -263,6 +262,7 @@ contract RoomRental {
             rentalInfo.hasConfirmed == false,
             "The rent has been confirmed"
         );
+        //! only after rent being confirmed is the rent paid! Need to pay in rentRoom function
 
         payable(msg.sender).transfer(
             rentalInfo.rentDuration * roomInfo.monthPrice
