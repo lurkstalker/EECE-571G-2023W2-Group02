@@ -143,8 +143,7 @@ contract RoomRental {
 
     // Function to make an appointment
     function makeAppointment(
-        uint256 roomId,
-        uint256 appointmentTime
+        uint256 roomId
     ) public checkLogin onlyValidRoomId(roomId) {
         require(
             !appointments[roomId].isValid,
@@ -263,6 +262,7 @@ contract RoomRental {
             rentalInfo.hasConfirmed == false,
             "The rent has been confirmed"
         );
+        //! only after rent being confirmed is the rent paid! Need to pay in rentRoom function
 
         payable(msg.sender).transfer(
             rentalInfo.rentDuration * roomInfo.monthPrice
@@ -294,11 +294,16 @@ contract RoomRental {
 
     // Getter for Appointment information
     // only check isValid, not sure what to do with isConfirmed
-    function isAppointmentAvaliable(
+    function checkAppointmentStatus(
         uint256 roomId
     ) public view checkLogin returns (bool) {
         require(roomId > 0 && roomId <= totalRoomNum, "Room does not exist");
         Appointment memory appointment = appointments[roomId];
+        require(
+            msg.sender == appointment.renteeAddr ||
+                msg.sender == appointment.renterAddr,
+            "User must be renter or rentee of the appointment"
+        );
         return appointment.isValid;
     }
 }
