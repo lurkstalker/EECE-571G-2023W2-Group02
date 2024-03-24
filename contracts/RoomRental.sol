@@ -36,7 +36,7 @@ contract RoomRental {
     }
 
     uint256 constant monthlyRentPrice = 1e17;
-    uint256 private nextAvaiRoomId = 0;
+    uint256 private curMaxRoomId = 0;
     uint256 private totalRoomCount = 0;
 
     mapping(address => uint256) balances; // address balance
@@ -71,7 +71,7 @@ contract RoomRental {
 
     modifier onlyValidRoomId(uint256 roomId) {
         // Check that the room exists and is available
-        require(roomId > 0 && roomId <= nextAvaiRoomId, "Room does not exist");
+        require(roomId > 0 && roomId <= curMaxRoomId, "Room does not exist");
         _;
     }
 
@@ -112,10 +112,10 @@ contract RoomRental {
     ) public checkLogin {
         require(bytes(roomLocation).length > 0, "Please input valid location");
         require(bytes(roomIntro).length > 0, "Please input valid info");
-        nextAvaiRoomId++;
+        curMaxRoomId++;
         totalRoomCount++;
-        roomInfos[nextAvaiRoomId] = RoomInfo({
-            roomId: nextAvaiRoomId,
+        roomInfos[curMaxRoomId] = RoomInfo({
+            roomId: curMaxRoomId,
             location: roomLocation,
             intro: roomIntro,
             isAvailable: true,
@@ -136,9 +136,9 @@ contract RoomRental {
             "There must be no active appointments for the room."
         );
         delete roomInfos[roomId]; // Delete the room information
-        // Update nextAvaiRoomId if the deleted room was the last in the mapping
-        if (roomId == nextAvaiRoomId) {
-            nextAvaiRoomId--;
+        // Update curMaxRoomId if the deleted room was the last in the mapping
+        if (roomId == curMaxRoomId) {
+            curMaxRoomId--;
         }
         totalRoomCount--;
     }
@@ -288,14 +288,13 @@ contract RoomRental {
     }
 
     // getter for user info
-    function getLoginStatus() public view returns(bool) {
+    function getLoginStatus() public view returns (bool) {
         return users[msg.sender].loggedIn;
     }
 
-    function getSignUpStatus() public view returns(bool) {
+    function getSignUpStatus() public view returns (bool) {
         return users[msg.sender].isValid;
     }
-
 
     // Getter for Room information
     function getRoomLocation(
@@ -320,12 +319,16 @@ contract RoomRental {
         return totalRoomCount;
     }
 
+    function getCurMaxRoomId() public view returns (uint256) {
+        return curMaxRoomId;
+    }
+
     // Getter for Appointment information
     // only check isValid, not sure what to do with isConfirmed
     function checkAppointmentStatus(
         uint256 roomId
     ) public view checkLogin returns (bool) {
-        require(roomId > 0 && roomId <= nextAvaiRoomId, "Room does not exist");
+        require(roomId > 0 && roomId <= curMaxRoomId, "Room does not exist");
         Appointment memory appointment = appointments[roomId];
         require(
             msg.sender == appointment.renteeAddr ||
@@ -346,7 +349,6 @@ contract RoomRental {
     function isRentalRoomValid(uint256 roomId) public view returns (bool) {
         return rental_room[roomId].isValid;
     }
-
 
     function getUserBalance() public view returns (uint256) {
         return balances[msg.sender];
