@@ -110,7 +110,7 @@ describe("RoomRental contract", function () {
         await expect(roomRental.connect(rentee).deleteRoom(1)).to.be.revertedWith("There must be no active appointments for the room.");
     });
 
-    it("Renter can make an appointment if the room is available", async function () {
+    it("Appointment Test#01 Renter can make an appointment if the room is available", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
         await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
@@ -118,7 +118,12 @@ describe("RoomRental contract", function () {
         expect(await roomRental.connect(renter1).checkAppointmentStatus(1)).to.equal(true);
     });
 
-    it("Renter can not make an appointment if the room is already booked", async function () {
+    it("Appointment Test#02 Should not allow making an appointment if the room does not exist", async function () {
+        await signUpAndLogin(renter1, "tim", "6789");
+        await expect(roomRental.connect(renter1).makeAppointment(1)).to.be.revertedWith("Room does not exist");
+    });
+
+    it("Appointment Test#03 Renter can not make an appointment if the room is already booked", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
         await signUpAndLogin(renter2, "brandon", "13579");
@@ -127,49 +132,46 @@ describe("RoomRental contract", function () {
         await expect(roomRental.connect(renter2).makeAppointment(1)).to.be.revertedWith("Appointment already exists for this room");
     });
 
-    it("Should not allow making an appointment if the room does not exist", async function () {
+    it("Appointment Test#04 Should not allow making an appointment if the room is already rented out", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
-        await expect(roomRental.connect(renter1).makeAppointment(1)).to.be.revertedWith("Room does not exist");
+        await signUpAndLogin(renter2, "brandon", "13579");
+        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
+        await expect(roomRental.connect(renter2).makeAppointment(1)).to.be.revertedWith("Room is not available");
     });
 
-    it("Rentee and renter can view the status of an appointment", async function () {
+    it("Appointment Test#05 Landlord cannot make an appointment for his own property", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
+        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        expect(roomRental.connect(renter1).makeAppointment(1)).to.be.revertedWith("Room owner cannot make an appointment himself/herself");
+    });
+
+    it("Appointment Test#06 Rentee and renter can view the status of an appointment", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
         await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
         await roomRental.connect(renter1).makeAppointment(1);
-
         const appointmentDetailsForRentee = await roomRental.connect(rentee).getAppointmentDetails(1);
         expect(appointmentDetailsForRentee.isValid).to.equal(true);
-
         const appointmentDetailsForRenter = await roomRental.connect(renter1).getAppointmentDetails(1);
         expect(appointmentDetailsForRenter.isValid).to.equal(true);
     });
 
-    it("Others who are not Rentee or renter can not view the status of an appointment", async function () {
+    it("Appointment Test#07 Others who are not Rentee or renter can not view the status of an appointment", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
         await signUpAndLogin(renter2, "brandon", "13579");
         await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
         await roomRental.connect(renter1).makeAppointment(1);
-
         const appointmentDetailsForRentee = await roomRental.connect(rentee).getAppointmentDetails(1);
         expect(appointmentDetailsForRentee.isValid).to.equal(true);
-
         const appointmentDetailsForRenter = await roomRental.connect(renter1).getAppointmentDetails(1);
         expect(appointmentDetailsForRenter.isValid).to.equal(true);
-
         expect(roomRental.connect(renter2).getAppointmentDetails(1)).to.be.revertedWith("Caller must be renter or rentee of the appointment");
     });
 
-    it("Should not allow making an appointment if one already exists for the room", async function () {
-        await signUpAndLogin(rentee, "alex", "12345");
-        await signUpAndLogin(renter1, "tim", "6789");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
-        await roomRental.connect(renter1).makeAppointment(1);
 
-        // Try to make another appointment for the same room
-        await expect(roomRental.connect(renter1).makeAppointment(1)).to.be.revertedWith("Appointment already exists for this room");
-    });
 
     it("Valid renter could rent the house with enough balance if the house is valid", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
