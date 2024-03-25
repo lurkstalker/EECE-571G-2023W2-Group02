@@ -21,7 +21,7 @@ describe("RoomRental contract", function () {
         expect(await roomRental.connect(rentee).getSignUpStatus()).to.equal(false);
         await roomRental.connect(rentee).userSignUp("alex", "12345");
         expect(await roomRental.connect(rentee).getSignUpStatus()).to.equal(true);
-        expect(roomRental.connect(rentee).userSignUp("tim", "344565")).to.be.revertedWith("Account already exists");
+        await expect(roomRental.connect(rentee).userSignUp("tim", "344565")).to.be.revertedWith("Account already exists");
     });
 
     it("LogIn Test#01 User can only log in with correct password", async function () {
@@ -43,7 +43,7 @@ describe("RoomRental contract", function () {
         await signUpAndLogin(rentee, "alex", "12345");
         expect(await roomRental.connect(rentee).getTotalRoomCount()).to.equal(0);
         expect(await roomRental.connect(rentee).getCurMaxRoomId()).to.equal(0);
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         expect(await roomRental.connect(rentee).getTotalRoomCount()).to.equal(1);
         expect(await roomRental.connect(rentee).getCurMaxRoomId()).to.equal(1);
         expect(await roomRental.connect(rentee).getRoomLocation(1)).to.equal("Downtown");
@@ -54,17 +54,17 @@ describe("RoomRental contract", function () {
 
     it("AddRoom Test#02 Rentee should not be able to add a room if the room location is empty", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
-        expect(roomRental.connect(rentee).addRoom("", "Nice view", ethers.parseEther("1"))).to.be.revertedWith("Please input valid location");
+        await expect(roomRental.connect(rentee).addRoom("", "Nice view", ethers.parseEther("1"))).to.be.revertedWith("Please input valid location");
     });
 
     it("AddRoom Test#03 Rentee should not be able to add a room if the room intro is empty", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
-        expect(roomRental.connect(rentee).addRoom("Downtown", "", ethers.parseEther("1"))).to.be.revertedWith("Please input valid info");
+        await expect(roomRental.connect(rentee).addRoom("Downtown", "", ethers.parseEther("1"))).to.be.revertedWith("Please input valid info");
     });
 
     it("DeleteRoom Test#01 Rentee should be able to delete a room", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         expect(await roomRental.connect(rentee).getRoomLocation(1)).to.equal("Downtown");
         expect(await roomRental.connect(rentee).getRoomIntro(1)).to.equal("Nice view");
         const roomRentalPrice = await roomRental.connect(rentee).getRoomPrice(1);
@@ -79,14 +79,14 @@ describe("RoomRental contract", function () {
 
     it("DeleteRoom Test#02 User should not be able to delete a room if he/she is not the room owner", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         await signUpAndLogin(renter1, "tim", "6789");
         await expect(roomRental.connect(renter1).deleteRoom(1)).to.be.revertedWith("Only the room owner can delete the room.");
     });
 
     it("DeleteRoom Test#03 Rentee should not be able to delete a room if the room is not available", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         await signUpAndLogin(renter1, "tim", "6789");
         // Let renter1 rent the room 01
         expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(true);
@@ -97,7 +97,7 @@ describe("RoomRental contract", function () {
 
     it("DeleteRoom Test#04 Rentee should not be able to delete a room if the room is appointmented ", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         await signUpAndLogin(renter1, "tim", "6789");
         // Let renter1 appointment the room 01
         await roomRental.connect(renter1).makeAppointment(1);
@@ -109,7 +109,7 @@ describe("RoomRental contract", function () {
         await signUpAndLogin(renter1, "tim", "6789");
         await addSampleRoom(rentee);
         await roomRental.connect(renter1).makeAppointment(1);
-        expect(await roomRental.connect(renter1).checkAppointmentStatus(1)).to.equal(true);
+        await expect(await roomRental.connect(renter1).checkAppointmentStatus(1)).to.equal(true);
     });
 
     it("Appointment Test#02 Should not allow making an appointment if the room does not exist", async function () {
@@ -138,7 +138,7 @@ describe("RoomRental contract", function () {
     it("Appointment Test#05 Landlord cannot make an appointment for his own property", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await addSampleRoom(rentee);
-        expect(roomRental.connect(renter1).makeAppointment(1)).to.be.revertedWith("Room owner cannot make an appointment himself/herself");
+        await expect(roomRental.connect(rentee).makeAppointment(1)).to.be.revertedWith("Room owner cannot make an appointment himself/herself");
     });
 
     it("Appointment Test#06 Rentee and renter can view the status of an appointment", async function () {
@@ -162,7 +162,7 @@ describe("RoomRental contract", function () {
         expect(appointmentDetailsForRentee.isValid).to.equal(true);
         const appointmentDetailsForRenter = await roomRental.connect(renter1).getAppointmentDetails(1);
         expect(appointmentDetailsForRenter.isValid).to.equal(true);
-        expect(roomRental.connect(renter2).getAppointmentDetails(1)).to.be.revertedWith("Caller must be renter or rentee of the appointment");
+        await expect(roomRental.connect(renter2).getAppointmentDetails(1)).to.be.revertedWith("Caller must be renter or rentee of the appointment");
     });
 
     it("RentRoom Test#01 Valid renter could rent the house with enough balance if the house is valid", async function () {
