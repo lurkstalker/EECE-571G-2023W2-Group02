@@ -17,12 +17,6 @@ describe("RoomRental contract", function () {
         roomRental = await roomRentalSystem.deploy();
     });
 
-    // Helper function to sign up and log in a user
-    async function signUpAndLogin(user, username, password) {
-        await roomRental.connect(user).userSignUp(username, password);
-        await roomRental.connect(user).userLogin(password);
-    }
-
     it("SignUp Test#01 User can only sign up if he hasn't done it before", async function () {
         expect(await roomRental.connect(rentee).getSignUpStatus()).to.equal(false);
         await roomRental.connect(rentee).userSignUp("alex", "12345");
@@ -113,7 +107,7 @@ describe("RoomRental contract", function () {
     it("Appointment Test#01 Renter can make an appointment if the room is available", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         await roomRental.connect(renter1).makeAppointment(1);
         expect(await roomRental.connect(renter1).checkAppointmentStatus(1)).to.equal(true);
     });
@@ -127,7 +121,7 @@ describe("RoomRental contract", function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
         await signUpAndLogin(renter2, "brandon", "13579");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         await roomRental.connect(renter1).makeAppointment(1);
         await expect(roomRental.connect(renter2).makeAppointment(1)).to.be.revertedWith("Appointment already exists for this room");
     });
@@ -136,21 +130,21 @@ describe("RoomRental contract", function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
         await signUpAndLogin(renter2, "brandon", "13579");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
         await expect(roomRental.connect(renter2).makeAppointment(1)).to.be.revertedWith("Room is not available");
     });
 
     it("Appointment Test#05 Landlord cannot make an appointment for his own property", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         expect(roomRental.connect(renter1).makeAppointment(1)).to.be.revertedWith("Room owner cannot make an appointment himself/herself");
     });
 
     it("Appointment Test#06 Rentee and renter can view the status of an appointment", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         await roomRental.connect(renter1).makeAppointment(1);
         const appointmentDetailsForRentee = await roomRental.connect(rentee).getAppointmentDetails(1);
         expect(appointmentDetailsForRentee.isValid).to.equal(true);
@@ -162,7 +156,7 @@ describe("RoomRental contract", function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
         await signUpAndLogin(renter2, "brandon", "13579");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+        await addSampleRoom(rentee);
         await roomRental.connect(renter1).makeAppointment(1);
         const appointmentDetailsForRentee = await roomRental.connect(rentee).getAppointmentDetails(1);
         expect(appointmentDetailsForRentee.isValid).to.equal(true);
@@ -171,66 +165,85 @@ describe("RoomRental contract", function () {
         expect(roomRental.connect(renter2).getAppointmentDetails(1)).to.be.revertedWith("Caller must be renter or rentee of the appointment");
     });
 
-
-
-    it("Valid renter could rent the house with enough balance if the house is valid", async function () {
+    it("RentRoom Test#01 Valid renter could rent the house with enough balance if the house is valid", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
-        expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(true);
+        await addSampleRoom(rentee);
+        await checkSampleRoomTentalAvaiStatus(1, true);
         await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
-        expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(false);
+        await checkSampleRoomTentalAvaiStatus(1, false);
     });
 
-    it("Valid renter could not rent the house without enough balance if the house is valid", async function () {
+    it("RentRoom Test#02 renter could not rent the house if the house is unavailable", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
-        expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(true);
+        await signUpAndLogin(renter2, "brandon", "13579");
+        await addSampleRoom(rentee);
+        await checkSampleRoomTentalAvaiStatus(1, true);
+        await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
+        await checkSampleRoomTentalAvaiStatus(1, false);
+        await (expect(roomRental.connect(renter2).rentRoom(1, 10, { value: etherAmountTenMonthRent }))).to.be.revertedWith("Please input a available room id");
+    });
+
+    it("RentRoom Test#03 renter could not rent the house if the renter has rent the other house", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
+        await signUpAndLogin(renter1, "tim", "6789");
+        await addSampleRoom(rentee);
+        await addSampleRoom(rentee);
+        await checkSampleRoomTentalAvaiStatus(1, true);
+        await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
+        await checkSampleRoomTentalAvaiStatus(1, false);
+        await (expect(roomRental.connect(renter1).rentRoom(2, 10, { value: etherAmountTenMonthRent }))).to.be.revertedWith("You already have a rental");
+    });
+
+    it("RentRoom Test#04 Valid renter could not rent the house without enough balance if the house is valid", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
+        await signUpAndLogin(renter1, "tim", "6789");
+        await addSampleRoom(rentee);
+        await checkSampleRoomTentalAvaiStatus(1, true);
         await (expect(roomRental.connect(renter1).rentRoom(1, 11, { value: etherAmountTenMonthRent }))).to.be.revertedWith("Plase pay the correct rent!");
     });
 
-    it("Valid renter could not rent the house with extra balance if the house is valid", async function () {
+    it("RentRoom Test#05 Valid renter could not rent the house with extra balance if the house is valid", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
-        expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(true);
+        await addSampleRoom(rentee);
+        await checkSampleRoomTentalAvaiStatus(1, true);
         await (expect(roomRental.connect(renter1).rentRoom(1, 9, { value: etherAmountTenMonthRent }))).to.be.revertedWith("Plase pay the correct rent!");
     });
 
-    it("Valid renter could move into the house if the rental is valid", async function () {
+    it("MoveIn Test#01 Valid renter could move into the house if the rental is valid", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
-        expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(true);
-        expect(await roomRental.connect(rentee).isRentalRoomConfirmed(1)).to.equal(false);
+        await addSampleRoom(rentee);
+        await checkSampleRoomTentalAvaiStatus(1, true);
         await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
-        expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(false);
-        expect(await roomRental.connect(rentee).isRentalRoomConfirmed(1)).to.equal(false);
+        await checkSampleRoomTentalAvaiStatus(1, false);
+        await checkSampleRoomTentalCfmStatus(1, false);
         await roomRental.connect(renter1).moveIn();
-        expect(await roomRental.connect(renter1).isRentalRoomConfirmed(1)).to.equal(true);
+        await checkSampleRoomTentalCfmStatus(1, true);
     });
 
-    it("Valid rentee could withdrawl deposit the money once renter payed the rental fee", async function () {
+    it("WithDraw Deposit Test#01 Valid rentee could withdrawl deposit the money once renter payed the rental fee", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
-        await roomRental.connect(rentee).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
-        expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(true);
-        expect(await roomRental.connect(rentee).isRentalRoomConfirmed(1)).to.equal(false);
+        await addSampleRoom(rentee);
+        await checkSampleRoomTentalAvaiStatus(1, true);
+        await checkSampleRoomTentalCfmStatus(1, false);
 
         // Get the rentee balance before renter rent room
         const renteeBalanceBeforeRentIn = await roomRental.connect(rentee).getUserBalance();
         assert.equal(renteeBalanceBeforeRentIn, BigInt(0));
 
         await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
-        expect(await roomRental.connect(rentee).isRoomAvailable(1)).to.equal(false);
+        await checkSampleRoomTentalAvaiStatus(1, false);
 
         // Get the rentee balance before renter move in
         const renteeBalanceBeforeMoveIn = await roomRental.connect(rentee).getUserBalance();
         assert.equal(renteeBalanceBeforeMoveIn, BigInt(0));
 
         await roomRental.connect(renter1).moveIn();
-        expect(await roomRental.connect(renter1).isRentalRoomConfirmed(1)).to.equal(true);
+        await checkSampleRoomTentalCfmStatus(1, true);
 
         // Get the rentee balance after renter move in
         const renteeBalanceAfterMoveIn = await roomRental.connect(rentee).getUserBalance();
@@ -242,4 +255,24 @@ describe("RoomRental contract", function () {
         assert.equal(renteeBalanceAfterWithDrawalDepo, BigInt(0));
     });
 
+    // Helper function to sign up and log in a user
+    async function signUpAndLogin(user, username, password) {
+        await roomRental.connect(user).userSignUp(username, password);
+        await roomRental.connect(user).userLogin(password);
+    }
+
+    // Helper function to sign up and log in a user
+    async function addSampleRoom(user) {
+        await roomRental.connect(user).addRoom("Downtown", "Nice view", ethers.parseEther("1"));
+    }
+
+    // Helper function to check room rental availability status
+    async function checkSampleRoomTentalAvaiStatus(roomId, expectedValue) {
+        expect(await roomRental.connect(rentee).isRoomAvailable(roomId)).to.equal(expectedValue);
+    }
+
+    // Helper function to check room rental confirmation status
+    async function checkSampleRoomTentalCfmStatus(roomId, expectedValue) {
+        expect(await roomRental.connect(rentee).isRentalRoomConfirmed(roomId)).to.equal(expectedValue);
+    }
 });

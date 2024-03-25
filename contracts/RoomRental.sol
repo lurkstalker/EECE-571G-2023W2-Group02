@@ -202,12 +202,9 @@ contract RoomRental {
     ) public payable checkLogin {
         RoomInfo memory curRoomInfo = roomInfos[roomId];
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
+        require(curRoomInfo.isAvailable, "Please input a available room id");
         require(
-            curRoomInfo.isAvailable == true,
-            "Please input a valid room id"
-        );
-        require(
-            rentalInfo.isEnd == true || rentalInfo.isValid == false,
+            rentalInfo.isEnd || !rentalInfo.isValid,
             "You already have a rental"
         );
         require(
