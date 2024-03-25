@@ -224,6 +224,52 @@ describe("RoomRental contract", function () {
         await checkSampleRoomTentalCfmStatus(1, true);
     });
 
+    it("MoveIn Test#02 renter could not move into the house if the rental is invalid", async function () {
+        await signUpAndLogin(renter1, "tim", "6789");
+        await (expect(roomRental.connect(renter1).moveIn())).to.be.revertedWith("You do not have a rental yet");
+    });
+
+    it("MoveIn Test#03 renter could not move into the house if the rental has been confirmed", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
+        await signUpAndLogin(renter1, "tim", "6789");
+        await addSampleRoom(rentee);
+        await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
+        await roomRental.connect(renter1).moveIn();
+        await (expect(roomRental.connect(renter1).moveIn())).to.be.revertedWith("The rent has been confirmed");
+    });
+
+    it("MoveOut Test#01 Valid renter could move out the house if the rental is valid and confirmed", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
+        await signUpAndLogin(renter1, "tim", "6789");
+        await addSampleRoom(rentee);
+        await checkSampleRoomTentalAvaiStatus(1, true);
+
+        await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
+        await checkSampleRoomTentalAvaiStatus(1, false);
+        await checkSampleRoomTentalCfmStatus(1, false);
+
+        await roomRental.connect(renter1).moveIn();
+        await checkSampleRoomTentalCfmStatus(1, true);
+        await checkSampleRoomTentalEndStatus(1, false);
+
+        await roomRental.connect(renter1).moveOut();
+        await checkSampleRoomTentalEndStatus(1, true);
+        await checkSampleRoomTentalAvaiStatus(1, true);
+    });
+
+    it("MoveOut Test#02 renter could not move out the house if the rental is invalid", async function () {
+        await signUpAndLogin(renter1, "tim", "6789");
+        await (expect(roomRental.connect(renter1).moveOut())).to.be.revertedWith("You do not have a rental yet");
+    });
+
+    it("MoveOut Test#03 renter could not move out the house if the rental has been confirmed", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
+        await signUpAndLogin(renter1, "tim", "6789");
+        await addSampleRoom(rentee);
+        await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
+        await (expect(roomRental.connect(renter1).moveOut())).to.be.revertedWith("You have not moved in yet");
+    });
+
     it("WithDraw Deposit Test#01 Valid rentee could withdrawl deposit the money once renter payed the rental fee", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
@@ -274,5 +320,10 @@ describe("RoomRental contract", function () {
     // Helper function to check room rental confirmation status
     async function checkSampleRoomTentalCfmStatus(roomId, expectedValue) {
         expect(await roomRental.connect(rentee).isRentalRoomConfirmed(roomId)).to.equal(expectedValue);
+    }
+
+    // Helper function to check room rental ending status
+    async function checkSampleRoomTentalEndStatus(roomId, expectedValue) {
+        expect(await roomRental.connect(rentee).isRentalRoomEnded(roomId)).to.equal(expectedValue);
     }
 });
