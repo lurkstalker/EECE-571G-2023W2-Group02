@@ -270,6 +270,43 @@ describe("RoomRental contract", function () {
         await (expect(roomRental.connect(renter1).moveOut())).to.be.revertedWith("You have not moved in yet");
     });
 
+    it("Refund Test#01 renter could not refund after confirm (move in)", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
+        await signUpAndLogin(renter1, "tim", "6789");
+        await addSampleRoom(rentee);
+
+        await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
+        await checkSampleRoomTentalAvaiStatus(1, false);
+        await checkSampleRoomTentalCfmStatus(1, false);
+
+        await roomRental.connect(renter1).moveIn();
+        await checkSampleRoomTentalCfmStatus(1, true);
+        await checkSampleRoomTentalEndStatus(1, false);
+
+        await (expect(roomRental.connect(renter1).refundRoom())).to.be.revertedWith("The rent has been confirmed");
+    });
+
+    it("Refund Test#02 renter could not refund after end (move out)", async function () {
+        await signUpAndLogin(rentee, "alex", "12345");
+        await signUpAndLogin(renter1, "tim", "6789");
+        await addSampleRoom(rentee);
+
+        await roomRental.connect(renter1).rentRoom(1, 10, { value: etherAmountTenMonthRent });
+        await checkSampleRoomTentalAvaiStatus(1, false);
+        await checkSampleRoomTentalCfmStatus(1, false);
+
+        await roomRental.connect(renter1).moveIn();
+        await checkSampleRoomTentalCfmStatus(1, true);
+        await checkSampleRoomTentalEndStatus(1, false);
+
+        await roomRental.connect(renter1).moveOut();
+        await checkSampleRoomTentalEndStatus(1, true);
+        await checkSampleRoomTentalAvaiStatus(1, true);
+
+        await (expect(roomRental.connect(renter1).refundRoom())).to.be.revertedWith("The rent has been confirmed");
+    });
+
+
     it("WithDraw Deposit Test#01 Valid rentee could withdrawl deposit the money once renter payed the rental fee", async function () {
         await signUpAndLogin(rentee, "alex", "12345");
         await signUpAndLogin(renter1, "tim", "6789");
@@ -295,7 +332,7 @@ describe("RoomRental contract", function () {
         const renteeBalanceAfterMoveIn = await roomRental.connect(rentee).getUserBalance();
         assert.equal(renteeBalanceAfterMoveIn, BigInt(etherAmountTenMonthRent));
 
-        // Get the rentee balance after rentee withdrwal the deposit
+        // Get the rentee balance after rentee withdraw the deposit
         await roomRental.connect(rentee).withdrawDeposit();
         const renteeBalanceAfterWithDrawalDepo = await roomRental.connect(rentee).getUserBalance();
         assert.equal(renteeBalanceAfterWithDrawalDepo, BigInt(0));
