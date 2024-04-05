@@ -1,10 +1,18 @@
 import React, {useState} from 'react';
 import {Button} from 'reactstrap';
+import {useContract} from '../ContractContext/ContractContext';
 import Web3 from 'web3';
 import {useNavigate} from 'react-router-dom';
-import {keccak256} from "js-sha3";
+import {keccak256} from 'js-sha3';
+
+// Import the contract ABI
+import myContractABI from '../RoomRentalABI.json';
+
+// Your deployed contract address
+const contractAddress = "0x813A7f8278BfF8A89981e9328457d10F1B18E67C";
 
 const HomePage = () => {
+    const {setContract} = useContract();
     const [web3, setWeb3] = useState(null);
     const navigate = useNavigate();
 
@@ -18,7 +26,10 @@ const HomePage = () => {
                 const web3Instance = new Web3(window.ethereum);
                 setWeb3(web3Instance);
 
-                // If accounts are successfully fetched, navigate to the sign up / login page
+                // Create a contract instance
+                const roomRentalContractInstance = new web3Instance.eth.Contract(myContractABI, contractAddress);
+                setContract(roomRentalContractInstance);
+
                 if (newAccounts.length > 0) {
                     // Assuming the first account is used for the authentication
                     const addressHash = keccak256(newAccounts[0]);
@@ -30,7 +41,6 @@ const HomePage = () => {
         } else {
             alert('Please install MetaMask to use this feature.');
         }
-
     };
 
     return (
