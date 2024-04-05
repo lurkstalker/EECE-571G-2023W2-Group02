@@ -402,3 +402,5 @@ cache/
 
 # Lock json file
 package-lock.json
+
+*.env
