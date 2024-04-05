@@ -9,19 +9,19 @@ const AuthPage = () => {
 
     // Retrieve the state passed from the HomePage
     const {addressHash} = location.state || {};
-    const {rentalContract} = useContract();
+    const {contract} = useContract();
     const [totalRoomCount, setTotalRoomCount] = useState(0);  // State to store the total room count
 
     useEffect(() => {
         const fetchTotalRoomCount = async () => {
-            if (rentalContract) {
-                const count = await rentalContract.methods.getTotalRoomCount().call();
+            if (contract) {
+                const count = await contract.methods.getTotalRoomCount().call();
                 setTotalRoomCount(count);
             }
         };
 
         fetchTotalRoomCount();
-    }, [rentalContract]);  // Effect runs when the rentalContract is set
+    }, [contract]);  // Effect runs when the rentalContract is set
 
     const goToSignUp = () => {
         navigate('/signup', {state: {addressHash}});

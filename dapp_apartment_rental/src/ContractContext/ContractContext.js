@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 
-const ContractContext = createContext();
+const ContractContext = createContext(undefined);
 
 export const useContract = () => useContext(ContractContext);
 

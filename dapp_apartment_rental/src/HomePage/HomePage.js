@@ -19,7 +19,6 @@ const HomePage = () => {
     const connectWalletHandler = async () => {
         if (window.ethereum) {
             try {
-                // Request account access
                 const newAccounts = await window.ethereum.request({method: 'eth_requestAccounts'});
 
                 // Create a Web3 instance
@@ -28,8 +27,9 @@ const HomePage = () => {
 
                 // Create a contract instance
                 const roomRentalContractInstance = new web3Instance.eth.Contract(myContractABI, contractAddress);
+                // let count = await roomRentalContractInstance.methods.getTotalRoomCount().call();
+                // alert("count is " + count);
                 setContract(roomRentalContractInstance);
-
                 if (newAccounts.length > 0) {
                     // Assuming the first account is used for the authentication
                     const addressHash = keccak256(newAccounts[0]);
