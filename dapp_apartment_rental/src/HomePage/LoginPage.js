@@ -1,29 +1,44 @@
 import React, {useState} from 'react';
 import {Button, Form, FormGroup, Input, Label} from 'reactstrap';
-import {useLocation, useNavigate} from 'react-router-dom';
+import { useNavigate} from 'react-router-dom';
+import {useContract} from "../ContractContext/ContractContext";
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    // Retrieve the state passed from the AuthPage
-    const {addressHash} = location.state || {};
+    const {contract, userAddress} = useContract();
 
-    const handleLogin = () => {
-        if (!addressHash) {
+
+    const handleLogin = async () => {
+        if (!userAddress) {
             alert('Ethereum address not found. Please connect your wallet.');
             return;
         }
 
+
+        // Basic validation
+        if (!password) {
+            alert('Please fill in all fields.');
+            return;
+        }
+        if (contract) {
+            await contract.methods.userLogin(password).send();
+            const userSignUp = await contract.methods.getSignUpStatus().call();
+            const userLogin = await contract.methods.getLoginStatus().call();
+            alert("User sign up state is " + userSignUp + "\n" + "login in state is " + userLogin);
+        }
+        localStorage.setItem(userAddress, JSON.stringify({username, password}));
+        navigate('/dashboard', {state: {userAddress}});
+
         // Use the addressHash for retrieving user data from localStorage
-        const userData = localStorage.getItem(addressHash);
+        const userData = localStorage.getItem(userAddress);
 
         if (userData) {
             const parsedData = JSON.parse(userData);
             if (parsedData.username === username && parsedData.password === password) {
-                navigate('/dashboard', {state: {addressHash}});
+                navigate('/dashboard', {state: {userAddress}});
             } else {
                 alert('Invalid username or password.');
             }

@@ -1,19 +1,16 @@
 import React, {useState} from 'react';
 import {Button, Form, FormGroup, Input, Label} from 'reactstrap';
-import {useLocation, useNavigate} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {useContract} from '../ContractContext/ContractContext';
 
 const SignUpPage = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const {contract} = useContract();
-    // Retrieve the state passed from the AuthPage
-    const {addressHash} = location.state || {};
+    const {contract,userAddress} = useContract();
 
     const handleSignUp = async () => {
-        if (!addressHash) {
+        if (!userAddress) {
             alert('Ethereum address not found. Please connect your wallet.');
             return;
         }
@@ -24,14 +21,15 @@ const SignUpPage = () => {
             return;
         }
         if (contract) {
-            await contract.methods.userSignUp(username, password).call();
+            // await contract.methods.userSignUp(username, password).send({ from: userAddress });
+            alert(userAddress)
             const userSignUp = await contract.methods.getSignUpStatus().call();
             const userLogin = await contract.methods.getLoginStatus().call();
             alert("User sign up state is " + userSignUp + "\n"
                 + "login in state is " + userLogin);
         }
-        localStorage.setItem(addressHash, JSON.stringify({username, password}));
-        navigate('/dashboard', {state: {addressHash}});
+        localStorage.setItem(userAddress, JSON.stringify({username, password}));
+        // navigate('/dashboard', {state: {userAddress}});
     };
 
     return (

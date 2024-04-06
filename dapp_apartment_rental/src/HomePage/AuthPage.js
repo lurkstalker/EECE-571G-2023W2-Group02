@@ -1,15 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Col, Container, Row} from 'reactstrap';
-import {useLocation, useNavigate} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {useContract} from '../ContractContext/ContractContext';
 
 const AuthPage = () => {
     const navigate = useNavigate();
-    const location = useLocation();
 
     // Retrieve the state passed from the HomePage
-    const {addressHash} = location.state || {};
-    const {contract} = useContract();
+    const {contract, userAddress} = useContract();
     const [totalRoomCount, setTotalRoomCount] = useState(0);  // State to store the total room count
 
     useEffect(() => {
@@ -24,11 +22,11 @@ const AuthPage = () => {
     }, [contract]);  // Effect runs when the rentalContract is set
 
     const goToSignUp = () => {
-        navigate('/signup', {state: {addressHash}});
+        navigate('/signup');
     };
 
     const goToLogin = () => {
-        navigate('/login', {state: {addressHash}});
+        navigate('/login');
     };
 
     return (
