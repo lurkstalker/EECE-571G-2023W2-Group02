@@ -6,6 +6,9 @@ import SignUpPage from "./HomePage/SignUpPage";
 import AuthPage from "./HomePage/AuthPage";
 import HomePage from "./HomePage/HomePage";
 import {ContractProvider} from "./ContractContext/ContractContext";
+import ListRoomPage from "./RoomPage/ListRoomPage";
+import RentPage from "./RentPage/RentPage";
+import AppointmentPage from "./AppointmentPage/AppointmentPage";
 
 const App = () => {
     return (
@@ -17,6 +20,9 @@ const App = () => {
                     <Route path="/signup" element={<SignUpPage/>}/>
                     <Route path="/login" element={<LoginPage/>}/>
                     <Route path="/dashboard" element={<Dashboard/>}/>
+                    <Route path="/list" element={<ListRoomPage/>}/>
+                    <Route path="/rent" element={<RentPage/>}/>
+                    <Route path="/appointments" element={<AppointmentPage/>}/>
                 </Routes>
             </ContractProvider>
         </Router>
