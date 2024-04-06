@@ -196,6 +196,20 @@ contract RoomRental {
         return roomInfos[roomId];
     }
 
+    // Add this function to your RoomRental contract
+
+    function getAllAvailableRooms() public view returns (RoomInfo[] memory) {
+        RoomInfo[] memory availableRooms = new RoomInfo[](totalRoomCount);
+        uint256 counter = 0;
+        for (uint256 i = 1; i <= curMaxRoomId; i++) {
+            if (roomInfos[i].isAvailable) {
+                availableRooms[counter] = roomInfos[i];
+                counter++;
+            }
+        }
+        return availableRooms;
+    }
+
     function rentRoom(
         uint256 roomId,
         uint256 duration

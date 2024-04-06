@@ -17,7 +17,6 @@ const LoginPage = () => {
             return;
         }
 
-
         // Basic validation
         if (!password) {
             alert('Please fill in all fields.');
@@ -31,29 +30,31 @@ const LoginPage = () => {
                 alert("You need to sign up firstly")
             } else {
                 if (isUserHasLogin) {
-                    navigate('/dashboard', {state: {userAddress}})
+                    localStorage.setItem(userAddress, JSON.stringify({username, password}));
+                    navigate('/dashboard')
                 } else {
                     await contract.methods.userLogin(password).send({from: userAddress});
                     alert("User sign up state is " + isUserHasSignUp + "\n" + "login in state is " + isUserHasLogin);
                     // todo edit the contract so that we know if the user has login successfully
-                    navigate('/dashboard', {state: {userAddress}})
+                    localStorage.setItem(userAddress, JSON.stringify({username, password}));
+                    navigate('/dashboard')
                 }
             }
         }
 
-        // Use the addressHash for retrieving user data from localStorage
-        const userData = localStorage.getItem(userAddress);
-
-        if (userData) {
-            const parsedData = JSON.parse(userData);
-            if (parsedData.username === username && parsedData.password === password) {
-                navigate('/dashboard', {state: {userAddress}});
-            } else {
-                alert('Invalid username or password.');
-            }
-        } else {
-            alert('No account found with this address.');
-        }
+        // // Use the addressHash for retrieving user data from localStorage
+        // const userData = localStorage.getItem(userAddress);
+        //
+        // if (userData) {
+        //     const parsedData = JSON.parse(userData);
+        //     if (parsedData.username === username && parsedData.password === password) {
+        //         navigate('/dashboard', {state: {userAddress}});
+        //     } else {
+        //         alert('Invalid username or password.');
+        //     }
+        // } else {
+        //     alert('No account found with this address.');
+        // }
     };
 
     return (
