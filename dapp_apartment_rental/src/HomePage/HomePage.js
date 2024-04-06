@@ -12,7 +12,7 @@ import myContractABI from '../RoomRentalABI.json';
 const contractAddress = "0x813A7f8278BfF8A89981e9328457d10F1B18E67C";
 
 const HomePage = () => {
-    const {setContract} = useContract();
+    const {setContract, setUserAddress} = useContract();
     const [web3, setWeb3] = useState(null);
     const navigate = useNavigate();
 
@@ -32,8 +32,9 @@ const HomePage = () => {
                 setContract(roomRentalContractInstance);
                 if (newAccounts.length > 0) {
                     // Assuming the first account is used for the authentication
-                    const addressHash = keccak256(newAccounts[0]);
-                    navigate('/auth', {state: {addressHash}});
+                    // const addressHash = keccak256(newAccounts[0]);
+                    setUserAddress(newAccounts[0]);
+                    navigate('/auth');
                 }
             } catch (error) {
                 console.error("User denied account access");
