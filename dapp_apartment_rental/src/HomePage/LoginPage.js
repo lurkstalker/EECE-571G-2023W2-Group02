@@ -24,9 +24,9 @@ const LoginPage = () => {
             return;
         }
         if (contract) {
-            await contract.methods.userLogin(password).send();
-            const userSignUp = await contract.methods.getSignUpStatus().call();
-            const userLogin = await contract.methods.getLoginStatus().call();
+            // await contract.methods.userLogin(password).send({ from: userAddress });
+            const userSignUp = await contract.methods.getSignUpStatus().call({from :userAddress});
+            const userLogin = await contract.methods.getLoginStatus().call({from :userAddress});
             alert("User sign up state is " + userSignUp + "\n" + "login in state is " + userLogin);
         }
         localStorage.setItem(userAddress, JSON.stringify({username, password}));
