@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Button, Form, FormGroup, Input, Label} from 'reactstrap';
-import { useNavigate} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {useContract} from "../ContractContext/ContractContext";
 
 const LoginPage = () => {
@@ -24,13 +24,22 @@ const LoginPage = () => {
             return;
         }
         if (contract) {
-            // await contract.methods.userLogin(password).send({ from: userAddress });
-            const userSignUp = await contract.methods.getSignUpStatus().call({from :userAddress});
-            const userLogin = await contract.methods.getLoginStatus().call({from :userAddress});
-            alert("User sign up state is " + userSignUp + "\n" + "login in state is " + userLogin);
+            alert(userAddress)
+            const isUserHasSignUp = await contract.methods.getSignUpStatus().call({from: userAddress});
+            const isUserHasLogin = await contract.methods.getLoginStatus().call({from: userAddress});
+            if (!isUserHasSignUp) {
+                alert("You need to sign up firstly")
+            } else {
+                if (isUserHasLogin) {
+                    navigate('/dashboard', {state: {userAddress}})
+                } else {
+                    await contract.methods.userLogin(password).send({from: userAddress});
+                    alert("User sign up state is " + isUserHasSignUp + "\n" + "login in state is " + isUserHasLogin);
+                    // todo edit the contract so that we know if the user has login successfully
+                    navigate('/dashboard', {state: {userAddress}})
+                }
+            }
         }
-        localStorage.setItem(userAddress, JSON.stringify({username, password}));
-        navigate('/dashboard', {state: {userAddress}});
 
         // Use the addressHash for retrieving user data from localStorage
         const userData = localStorage.getItem(userAddress);
