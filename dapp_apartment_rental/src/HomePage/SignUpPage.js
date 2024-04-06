@@ -21,15 +21,21 @@ const SignUpPage = () => {
             return;
         }
         if (contract) {
-            // await contract.methods.userSignUp(username, password).send({ from: userAddress });
             alert(userAddress)
-            const userSignUp = await contract.methods.getSignUpStatus().call({from :userAddress});
-            const userLogin = await contract.methods.getLoginStatus().call({from :userAddress});
-            alert("User sign up state is " + userSignUp + "\n"
-                + "login in state is " + userLogin);
+            const isUserHasSignUp = await contract.methods.getSignUpStatus().call({from :userAddress});
+            const isUserHasLogin = await contract.methods.getLoginStatus().call({from :userAddress});
+            if (!isUserHasSignUp) {
+                await contract.methods.userSignUp(username, password).send({ from: userAddress });
+                alert("User sign up state is " + isUserHasSignUp + "\n" + "login in state is " + isUserHasLogin);
+                localStorage.setItem(userAddress, JSON.stringify({username, password}));
+                // todo edit the contract so that we know if the user has sign up successfully
+                navigate('/dashboard', {state: {userAddress}});
+            }
+            else {
+                alert("You have signed up with your address. Go to login page")
+                navigate('/login', {state: {userAddress}});
+            }
         }
-        localStorage.setItem(userAddress, JSON.stringify({username, password}));
-        // navigate('/dashboard', {state: {userAddress}});
     };
 
     return (
