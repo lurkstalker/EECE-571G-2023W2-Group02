@@ -12,10 +12,9 @@
   "author": "David",
   "license": "MIT",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "chai": "^4.4.1",
-    "dotenv": "^16.4.5",
-    "hardhat": "^2.22.2"
+    "hardhat": "^2.20.1"
   },
   "dependencies": {
     "big-number": "^2.0.0"
