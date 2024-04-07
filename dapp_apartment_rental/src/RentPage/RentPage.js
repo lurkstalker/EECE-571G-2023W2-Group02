@@ -11,38 +11,43 @@ const RentPage = () => {
     const [loading, setLoading] = useState(false);
     const [userRental, setUserRental] = useState(null);
 
+    const fetchRoomDetails = async () => {
+        setLoading(true);
+        try {
+            const allRooms = await contract.methods.getAllRooms().call();
+            const userRentalInfo = await contract.methods.getRenterRentalInfo().call({from: userAddress});
+
+            setUserRental(userRentalInfo.isValid ? userRentalInfo : null);
+
+            let enrichedRooms = await Promise.all(allRooms.map(async room => {
+                const rentalInfo = await contract.methods.getRoomRentalInfo(room.roomId).call();
+                return {
+                    ...room,
+                    rentedByUser: userRentalInfo.isValid && userRentalInfo.roomId === room.roomId,
+                    isRented: rentalInfo.isValid
+                };
+            }));
+
+            // Sort rooms: user's rented rooms first, then available rooms, then unavailable rooms
+            enrichedRooms.sort((a, b) => {
+                if (a.rentedByUser) return -1;
+                if (b.rentedByUser) return 1;
+                return a.isAvailable === b.isAvailable ? 0 : a.isAvailable ? -1 : 1;
+            });
+
+            setRooms(enrichedRooms);
+            let initialDurations = {};
+            enrichedRooms.forEach(room => {
+                initialDurations[room.roomId] = '1'; // Default duration of 1 month
+            });
+            setRentDurations(initialDurations);
+        } catch (error) {
+            console.error("Error fetching room details:", error);
+        }
+        setLoading(false);
+    };
+
     useEffect(() => {
-        const fetchRoomDetails = async () => {
-            setLoading(true);
-            try {
-                const allRooms = await contract.methods.getAllRooms().call();
-                const userRentalInfo = await contract.methods.getRenterRentalInfo().call({from: userAddress});
-
-                setUserRental(userRentalInfo.isValid ? userRentalInfo : null);
-
-                let enrichedRooms = await Promise.all(allRooms.map(async room => {
-                    const rentalInfo = await contract.methods.getRoomRentalInfo(room.roomId).call();
-                    return {
-                        ...room,
-                        rentedByUser: userRentalInfo.isValid && userRentalInfo.roomId === room.roomId,
-                        isRented: rentalInfo.isValid
-                    };
-                }));
-
-                // Sort rooms: user's rented rooms first, then available rooms, then unavailable rooms
-                enrichedRooms.sort((a, b) => {
-                    if (a.rentedByUser) return -1;
-                    if (b.rentedByUser) return 1;
-                    return a.isAvailable === b.isAvailable ? 0 : a.isAvailable ? -1 : 1;
-                });
-
-                setRooms(enrichedRooms);
-            } catch (error) {
-                console.error("Error fetching room details:", error);
-            }
-            setLoading(false);
-        };
-
         fetchRoomDetails();
     }, [contract, userAddress]);
 
@@ -55,18 +60,22 @@ const RentPage = () => {
         const duration = rentDurations[roomId];
         setLoading(true);
 
-        // try {
+        try {
             const userRentalInfo = await contract.methods.getRenterRentalInfo().call({from: userAddress});
             const isRentalRoomValid = userRentalInfo.isValid;
             if (!isRentalRoomValid) {
-                await contract.methods.rentRoom(roomId, duration).send({from: userAddress, value: monthPrice * duration});
+                await contract.methods.rentRoom(roomId, duration).send({
+                    from: userAddress,
+                    value: monthPrice * duration
+                });
                 alert('Room rented successfully!');
+                await fetchRoomDetails();
             } else {
                 alert('You cannot rent this room at the moment since you already has a room rental');
             }
-        // } catch (error) {
-        //     alert('Error renting room:', error.message);
-        // }
+        } catch (error) {
+            alert('Error renting room:', error.message);
+        }
 
         setLoading(false);
     };
