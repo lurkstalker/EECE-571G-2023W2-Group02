@@ -24,8 +24,8 @@ const LoginPage = () => {
         }
         if (contract) {
             alert(userAddress)
-            const isUserHasSignUp = await contract.methods.getSignUpStatus().call({from: userAddress});
-            const isUserHasLogin = await contract.methods.getLoginStatus().call({from: userAddress});
+            const isUserHasSignUp = (await contract.methods.getUserStatus().call({from :userAddress})).isValid;
+            const isUserHasLogin = (await contract.methods.getUserStatus().call({from :userAddress})).loggedIn;
             if (!isUserHasSignUp) {
                 alert("You need to sign up firstly")
             } else {

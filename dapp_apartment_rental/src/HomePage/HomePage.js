@@ -9,7 +9,7 @@ import {keccak256} from 'js-sha3';
 import myContractABI from '../RoomRentalABI.json';
 
 // Your deployed contract address
-const contractAddress = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
+const contractAddress = "0x3aa5ebb10dc797cac828524e59a333d0a371443c";
 
 const HomePage = () => {
     const {setContract, setUserAddress} = useContract();
