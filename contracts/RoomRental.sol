@@ -48,11 +48,6 @@ contract RoomRental {
 
     constructor() {}
 
-    modifier onlyNonOwner(address payable owner) {
-        require(msg.sender != owner, "Only non-owner can call this function.");
-        _;
-    }
-
     modifier checkLogin() {
         require(
             users[msg.sender].loggedIn == true,
@@ -197,17 +192,16 @@ contract RoomRental {
     }
 
     // Add this function to your RoomRental contract
-
-    function getAllAvailableRooms() public view returns (RoomInfo[] memory) {
-        RoomInfo[] memory availableRooms = new RoomInfo[](totalRoomCount);
+    function getAllRooms() public view returns (RoomInfo[] memory) {
+        RoomInfo[] memory allRooms = new RoomInfo[](totalRoomCount);
         uint256 counter = 0;
         for (uint256 i = 1; i <= curMaxRoomId; i++) {
-            if (roomInfos[i].isAvailable) {
-                availableRooms[counter] = roomInfos[i];
+            if (roomInfos[i].roomId > 0) {
+                allRooms[counter] = roomInfos[i];
                 counter++;
             }
         }
-        return availableRooms;
+        return allRooms;
     }
 
     function rentRoom(
@@ -216,8 +210,8 @@ contract RoomRental {
     ) public payable checkLogin {
         RoomInfo memory curRoomInfo = roomInfos[roomId];
         RentalInfo memory rentalInfo = rental_renter[msg.sender];
-        require(curRoomInfo.isAvailable,"Please input a available room id");
-        require(rentalInfo.isEnd || !rentalInfo.isValid,"You already have a rental");
+        require(curRoomInfo.isAvailable, "Please input a available room id");
+        require(!rentalInfo.isValid, "You already have a rental");
         require(
             msg.value == duration * curRoomInfo.monthPrice,
             "Plase pay the correct rent!"
@@ -261,6 +255,7 @@ contract RoomRental {
         require(rentalInfo.hasConfirmed, "You have not moved in yet");
 
         rentalInfo.isEnd = true;
+        rentalInfo.isValid = false;
 
         rental_renter[msg.sender] = rentalInfo;
         rental_room[rentalInfo.roomId] = rentalInfo;
@@ -295,32 +290,41 @@ contract RoomRental {
         roomInfos[rentalInfo.roomId] = roomInfo;
     }
 
-    // getter for user info
-    function getLoginStatus() public view returns (bool) {
-        return users[msg.sender].loggedIn;
+    // Getter for Appointment information
+    // only check isValid, not sure what to do with isConfirmed
+    function checkAppointmentStatus(
+        uint256 roomId
+    ) public view checkLogin returns (bool) {
+        require(roomId > 0 && roomId <= curMaxRoomId, "Room does not exist");
+        Appointment memory appointment = appointments[roomId];
+        // require(
+        //     msg.sender == appointment.renteeAddr ||
+        //         msg.sender == appointment.renterAddr,
+        //     "User must be renter or rentee of the appointment"
+        // );
+        return appointment.isValid;
     }
 
-    function getSignUpStatus() public view returns (bool) {
-        return users[msg.sender].isValid;
+    // getter for user info
+    function getUserStatus() public view returns (User memory) {
+        return users[msg.sender];
     }
 
     // Getter for Room information
-    function getRoomLocation(
-        uint256 roomId
-    ) public view returns (string memory) {
-        return roomInfos[roomId].location;
+    function getRoomInfo(uint256 roomId) public view returns (RoomInfo memory) {
+        return roomInfos[roomId];
     }
 
-    function getRoomIntro(uint256 roomId) public view returns (string memory) {
-        return roomInfos[roomId].intro;
+    function getRenterRentalInfo() public view returns (RentalInfo memory) {
+        return rental_renter[msg.sender];
     }
 
-    function getRoomPrice(uint256 roomId) public view returns (uint256) {
-        return roomInfos[roomId].monthPrice;
+    function getRoomRentalInfo(uint256 roomId) public view returns (RentalInfo memory) {
+        return rental_room[roomId];
     }
 
-    function isRoomAvailable(uint256 roomId) public view returns (bool) {
-        return roomInfos[roomId].isAvailable;
+    function getUserBalance() public view returns (uint256) {
+        return balances[msg.sender];
     }
 
     function getTotalRoomCount() public view returns (uint256) {
@@ -329,36 +333,5 @@ contract RoomRental {
 
     function getCurMaxRoomId() public view returns (uint256) {
         return curMaxRoomId;
-    }
-
-    // Getter for Appointment information
-    // only check isValid, not sure what to do with isConfirmed
-    function checkAppointmentStatus(
-        uint256 roomId
-    ) public view checkLogin returns (bool) {
-        require(roomId > 0 && roomId <= curMaxRoomId, "Room does not exist");
-        Appointment memory appointment = appointments[roomId];
-        require(
-            msg.sender == appointment.renteeAddr ||
-                msg.sender == appointment.renterAddr,
-            "User must be renter or rentee of the appointment"
-        );
-        return appointment.isValid;
-    }
-
-    function isRentalRoomConfirmed(uint256 roomId) public view returns (bool) {
-        return rental_room[roomId].hasConfirmed;
-    }
-
-    function isRentalRoomEnded(uint256 roomId) public view returns (bool) {
-        return rental_room[roomId].isEnd;
-    }
-
-    function isRentalRoomValid(uint256 roomId) public view returns (bool) {
-        return rental_room[roomId].isValid;
-    }
-
-    function getUserBalance() public view returns (uint256) {
-        return balances[msg.sender];
     }
 }
