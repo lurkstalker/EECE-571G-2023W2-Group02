@@ -22,8 +22,8 @@ const SignUpPage = () => {
         }
         if (contract) {
             alert(userAddress)
-            const isUserHasSignUp = await contract.methods.getSignUpStatus().call({from :userAddress});
-            const isUserHasLogin = await contract.methods.getLoginStatus().call({from :userAddress});
+            const isUserHasSignUp = (await contract.methods.getUserStatus().call({from :userAddress})).isValid;
+            const isUserHasLogin = (await contract.methods.getUserStatus().call({from :userAddress})).loggedIn;
             if (!isUserHasSignUp) {
                 await contract.methods.userSignUp(username, password).send({ from: userAddress });
                 alert("User sign up state is " + isUserHasSignUp + "\n" + "login in state is " + isUserHasLogin);
