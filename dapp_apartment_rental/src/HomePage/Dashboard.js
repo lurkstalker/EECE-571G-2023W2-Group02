@@ -19,7 +19,8 @@ const Dashboard = ({}) => {
             <div>Please choose what you want to do:</div>
             <Button color="primary" onClick={() => navigate('/rent')}>Rent</Button>{' '}
             <Button color="primary" onClick={() => navigate('/list')}>List</Button>{' '}
-            <Button color="primary" onClick={() => navigate('/appointments')}>Appointments</Button>
+            <Button color="primary" onClick={() => navigate('/appointments')}>Appointments</Button>{' '}
+            <Button color="primary" onClick={() => navigate('/your-rental')}>Your Rental</Button>
         </div>
     );
 };

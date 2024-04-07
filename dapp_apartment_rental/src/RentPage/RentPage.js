@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Card, CardBody, CardText, CardTitle, FormGroup, Input, Label } from 'reactstrap';
-import { useNavigate } from 'react-router-dom';
-import { useContract } from '../ContractContext/ContractContext';
+import React, {useEffect, useState} from 'react';
+import {Button, Card, CardBody, CardText, CardTitle, FormGroup, Input, Label} from 'reactstrap';
+import {useNavigate} from 'react-router-dom';
+import {useContract} from '../ContractContext/ContractContext';
 
 const RentPage = () => {
     let navigate = useNavigate();
-    const { contract, userAddress } = useContract();
+    const {contract, userAddress} = useContract();
     const [rooms, setRooms] = useState([]);
     const [rentDurations, setRentDurations] = useState({});
     const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ const RentPage = () => {
             setLoading(true);
             try {
                 const allRooms = await contract.methods.getAllRooms().call();
-                const userRentalInfo = await contract.methods.getRenterRentalInfo().call({ from: userAddress });
+                const userRentalInfo = await contract.methods.getRenterRentalInfo().call({from: userAddress});
 
                 setUserRental(userRentalInfo.isValid ? userRentalInfo : null);
 
@@ -24,7 +24,7 @@ const RentPage = () => {
                     const rentalInfo = await contract.methods.getRoomRentalInfo(room.roomId).call();
                     return {
                         ...room,
-                        rentedByUser: userRentalInfo.roomId === room.roomId,
+                        rentedByUser: userRentalInfo.isValid && userRentalInfo.roomId === room.roomId,
                         isRented: rentalInfo.isValid
                     };
                 }));
@@ -55,21 +55,18 @@ const RentPage = () => {
         const duration = rentDurations[roomId];
         setLoading(true);
 
-        try {
-            const userRentalInfo = await contract.methods.getRenterRentalInfo().call({ from: userAddress });
+        // try {
+            const userRentalInfo = await contract.methods.getRenterRentalInfo().call({from: userAddress});
             const isRentalRoomValid = userRentalInfo.isValid;
             if (!isRentalRoomValid) {
-                await contract.methods.rentRoom(roomId, duration).send({
-                    from: userAddress,
-                    value: monthPrice * duration
-                });
+                await contract.methods.rentRoom(roomId, duration).send({from: userAddress, value: monthPrice * duration});
                 alert('Room rented successfully!');
             } else {
                 alert('You cannot rent this room at the moment since you already has a room rental');
             }
-        } catch (error) {
-            alert('Error renting room:', error.message);
-        }
+        // } catch (error) {
+        //     alert('Error renting room:', error.message);
+        // }
 
         setLoading(false);
     };
@@ -90,7 +87,8 @@ const RentPage = () => {
                                 <CardText>Location: {room.location}</CardText>
                                 <CardText>Intro: {room.intro}</CardText>
                                 <CardText>Price: {room.monthPrice} Wei per month</CardText>
-                                <CardText style={{color: room.rentedByUser ? 'blue' : room.isAvailable ? 'green' : 'red'}}>
+                                <CardText
+                                    style={{color: room.rentedByUser ? 'blue' : room.isAvailable ? 'green' : 'red'}}>
                                     {room.rentedByUser ? 'Rented by you' : room.isAvailable ? 'Available' : 'Not available'}
                                 </CardText>
                                 {room.isAvailable && !room.rentedByUser && (
