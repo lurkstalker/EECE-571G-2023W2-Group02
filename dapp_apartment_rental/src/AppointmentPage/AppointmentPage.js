@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Button, Form, FormGroup, Label, Input } from 'reactstrap';
-import { useNavigate } from 'react-router-dom';
+import React, {useState} from 'react';
+import {Button, Form, FormGroup, Input, Label} from 'reactstrap';
+import {useNavigate} from 'react-router-dom';
 import {useContract} from "../ContractContext/ContractContext";
 
 
@@ -9,8 +9,8 @@ const AppointmentsPage = () => {
     const [roomId, setRoomId] = useState('');
     const {contract, userAddress} = useContract();
 
-    const makeAppointment = async() => {
-        
+    const makeAppointment = async () => {
+
         if (!roomId) {
             alert('Please fill in Room id.');
             return;
@@ -18,39 +18,37 @@ const AppointmentsPage = () => {
 
         if (contract) {
             alert(userAddress)
-            let roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).send({ from: userAddress });
-            if(roomAppointStatus){
+            let roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).call({from: userAddress});
+            if (roomAppointStatus) {
                 alert("There is an existing appointment for this room!");
                 return;
             }
 
-            const roomStatus = await contract.methods.getRoomInfo(roomId).send({ from: userAddress });
-            if(!roomStatus.isAvailable){
+            const roomStatus = await contract.methods.getRoomInfo(roomId).call({from: userAddress});
+            if (!roomStatus.isAvailable) {
                 alert("This room is not available!");
                 return;
             }
 
-            if(userAddress == roomStatus.owner){
+            if (userAddress.toLowerCase() === roomStatus.owner.toLowerCase()) {
                 alert("Room owner cannot make an appointment himself/herself");
                 return;
             }
 
-            await contract.methods.makeAppointment(roomId).send({ from: userAddress });
+            await contract.methods.makeAppointment(roomId).send({from: userAddress});
             localStorage.setItem(userAddress, JSON.stringify(roomId));
 
-            roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).send({ from: userAddress });
-            if(roomAppointStatus){
+            roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).call({from: userAddress});
+            if (roomAppointStatus) {
                 alert("Appointment successful!");
-                return;
             }
-            return;
         }
-        
-        
+
+
         // Clear form or provide some success message
     };
 
-    const deleteAppointment = async() => {
+    const deleteAppointment = async () => {
         if (!roomId) {
             alert('Please fill in Room id.');
             return;
@@ -58,35 +56,27 @@ const AppointmentsPage = () => {
 
         if (contract) {
             alert(userAddress)
-            let roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).send({ from: userAddress });
-            if(!roomAppointStatus){
+            let roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).call({from: userAddress});
+            if (!roomAppointStatus) {
                 alert("There is no appointment for this room!");
                 return;
             }
-
-            // const roomStatus = await contract.methods.getRoomInfo(roomId).send({ from: userAddress });
-            // if(!roomStatus.isAvailable){
-            //     alert("This room is not available!");
-            //     return;
-            // }
 
             // if(userAddress == roomStatus.owner){
             //     alert("Room owner cannot make an appointment himself/herself");
             //     return;
             // }
 
-            // await contract.methods.deleteAppointment(roomId).send({ from: userAddress });
-            // localStorage.removeItem(userAddress);
+            await contract.methods.deleteAppointment(roomId).send({from: userAddress});
+            localStorage.removeItem(userAddress);
 
-            roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).send({ from: userAddress });
-            if(!roomAppointStatus){
+            roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).call({from: userAddress});
+            if (!roomAppointStatus) {
                 alert("Appointment has been canceled!");
-                return;
             }
-            return;
         }
-        
-        
+
+
     };
 
     return (
