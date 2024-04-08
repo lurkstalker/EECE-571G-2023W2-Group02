@@ -168,6 +168,13 @@ contract RoomRental {
             appointments[roomId].isValid,
             "No Appointment existed for this room"
         );
+        // Ensure that the function caller is either the renter or
+        // the rentee of the appointment
+        Appointment memory appt = appointments[roomId];
+        require(
+            msg.sender == appt.renteeAddr || msg.sender == appt.renterAddr,
+            "Caller must be renter or rentee of the appointment"
+        );
         delete appointments[roomId]; // Delete the appointments information
     }
 
@@ -176,12 +183,6 @@ contract RoomRental {
         uint256 appointmentId
     ) public view checkLogin returns (Appointment memory) {
         Appointment memory appt = appointments[appointmentId];
-        // Ensure that the function caller is either the renter or
-        // the rentee of the appointment
-        require(
-            msg.sender == appt.renteeAddr || msg.sender == appt.renterAddr,
-            "Caller must be renter or rentee of the appointment"
-        );
         return appt;
     }
 
