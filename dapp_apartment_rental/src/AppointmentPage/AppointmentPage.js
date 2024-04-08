@@ -1,37 +1,92 @@
 import React, { useState } from 'react';
 import { Button, Form, FormGroup, Label, Input } from 'reactstrap';
 import { useNavigate } from 'react-router-dom';
+import {useContract} from "../ContractContext/ContractContext";
+
 
 const AppointmentsPage = () => {
     let navigate = useNavigate();
-    const [appointmentDetails, setAppointmentDetails] = useState({
-        roomId: ''
-    });
+    const [roomId, setRoomId] = useState('');
+    const {contract, userAddress} = useContract();
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setAppointmentDetails({
-            ...appointmentDetails,
-            [name]: value
-        });
-    };
+    const makeAppointment = async() => {
+        
+        if (!roomId) {
+            alert('Please fill in Room id.');
+            return;
+        }
 
-    const makeAppointment = () => {
-        const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-        const newAppointment = {
-            ...appointmentDetails,
-            id: appointments.length + 1
-        };
-        appointments.push(newAppointment);
-        localStorage.setItem('appointments', JSON.stringify(appointments));
+        if (contract) {
+            alert(userAddress)
+            let roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).send({ from: userAddress });
+            if(roomAppointStatus){
+                alert("There is an existing appointment for this room!");
+                return;
+            }
+
+            const roomStatus = await contract.methods.getRoomInfo(roomId).send({ from: userAddress });
+            if(!roomStatus.isAvailable){
+                alert("This room is not available!");
+                return;
+            }
+
+            if(userAddress == roomStatus.owner){
+                alert("Room owner cannot make an appointment himself/herself");
+                return;
+            }
+
+            await contract.methods.makeAppointment(roomId).send({ from: userAddress });
+            localStorage.setItem(userAddress, JSON.stringify(roomId));
+
+            roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).send({ from: userAddress });
+            if(roomAppointStatus){
+                alert("Appointment successful!");
+                return;
+            }
+            return;
+        }
+        
+        
         // Clear form or provide some success message
     };
 
-    const deleteAppointment = (appointmentId) => {
-        let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-        appointments = appointments.filter(appointment => appointment.id !== appointmentId);
-        localStorage.setItem('appointments', JSON.stringify(appointments));
-        // Clear form or provide some success message
+    const deleteAppointment = async() => {
+        if (!roomId) {
+            alert('Please fill in Room id.');
+            return;
+        }
+
+        if (contract) {
+            alert(userAddress)
+            let roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).send({ from: userAddress });
+            if(!roomAppointStatus){
+                alert("There is no appointment for this room!");
+                return;
+            }
+
+            // const roomStatus = await contract.methods.getRoomInfo(roomId).send({ from: userAddress });
+            // if(!roomStatus.isAvailable){
+            //     alert("This room is not available!");
+            //     return;
+            // }
+
+            // if(userAddress == roomStatus.owner){
+            //     alert("Room owner cannot make an appointment himself/herself");
+            //     return;
+            // }
+
+            // await contract.methods.deleteAppointment(roomId).send({ from: userAddress });
+            // localStorage.removeItem(userAddress);
+
+            roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).send({ from: userAddress });
+            if(!roomAppointStatus){
+                alert("Appointment has been canceled!");
+                return;
+            }
+            return;
+        }
+        
+        
     };
 
     return (
@@ -45,12 +100,12 @@ const AppointmentsPage = () => {
                     name="roomId"
                     id="roomId"
                     placeholder="Room ID"
-                    value={appointmentDetails.roomId}
-                    onChange={handleInputChange}
+                    value={roomId}
+                    onChange={(e) => setRoomId(e.target.value)}
                 />
             </FormGroup>
             <Button color="primary" onClick={makeAppointment}>Make Appointment</Button>{' '}
-            <Button color="secondary" onClick={() => deleteAppointment(appointmentDetails.roomId)}>Delete Appointment</Button>{' '}
+            <Button color="secondary" onClick={() => deleteAppointment()}>Delete Appointment</Button>{' '}
             <Button onClick={() => navigate(-1)}>Back</Button>
         </Form>
     );
