@@ -3,17 +3,24 @@ import {Button, Card, CardBody, CardText, CardTitle} from 'reactstrap';
 import {useContract} from '../ContractContext/ContractContext';
 
 const YourRentalPage = () => {
-    const {contract, userAddress} = useContract();
     const [rentalInfo, setRentalInfo] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isOwner, setIsOwner] = useState(false);
     const [ownerBalance, setOwnerBalance] = useState(0);
+
+    let [contract] = useState(null);
+    const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
+
+    if (!contract) {
+        contract = createContractInstance(getWeb3(), contractAddress);
+    }
 
     useEffect(() => {
         const fetchInfo = async () => {
             setLoading(true);
             try {
                 // Fetch rental info if the user has rented a room
+                alert("userAddress is " + userAddress);
                 const info = await contract.methods.getRenterRentalInfo().call({from: userAddress});
                 setRentalInfo(info.isValid ? info : null);
 
@@ -42,7 +49,7 @@ const YourRentalPage = () => {
         if (contract && userAddress) {
             fetchInfo();
         }
-    }, [contract, userAddress, isOwner]);
+    }, [userAddress, isOwner]);
 
     const handleAction = async (action) => {
         if (!contract || !userAddress) return;

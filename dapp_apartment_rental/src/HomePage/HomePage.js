@@ -3,17 +3,16 @@ import {Button} from 'reactstrap';
 import {useContract} from '../ContractContext/ContractContext';
 import Web3 from 'web3';
 import {useNavigate} from 'react-router-dom';
-import {keccak256} from 'js-sha3';
 
 // Import the contract ABI
 import myContractABI from '../RoomRentalABI.json';
 
 // Your deployed contract address
-const contractAddress = "0x8464135c8f25da09e49bc8782676a84730c318bc";
+const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 const HomePage = () => {
-    const {setContract, setUserAddress} = useContract();
-    const [web3, setWeb3] = useState(null);
+    const {updateContractAddress, updateUserAddress, createContractInstance} = useContract();
+    const [web3] = useState(null);
     const navigate = useNavigate();
 
     const connectWalletHandler = async () => {
@@ -23,17 +22,14 @@ const HomePage = () => {
 
                 // Create a Web3 instance
                 const web3Instance = new Web3(window.ethereum);
-                setWeb3(web3Instance);
-
                 // Create a contract instance
                 const roomRentalContractInstance = new web3Instance.eth.Contract(myContractABI, contractAddress);
-                // let count = await roomRentalContractInstance.methods.getTotalRoomCount().call();
-                // alert("count is " + count);
-                setContract(roomRentalContractInstance);
+                updateContractAddress(contractAddress)
                 if (newAccounts.length > 0) {
                     // Assuming the first account is used for the authentication
                     // const addressHash = keccak256(newAccounts[0]);
-                    setUserAddress(newAccounts[0]);
+                    localStorage.setItem('userAddress', newAccounts[0]);
+                    updateUserAddress(newAccounts[0]);
                     navigate('/auth');
                 }
             } catch (error) {

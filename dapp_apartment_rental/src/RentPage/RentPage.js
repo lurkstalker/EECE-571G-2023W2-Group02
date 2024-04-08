@@ -5,11 +5,17 @@ import {useContract} from '../ContractContext/ContractContext';
 
 const RentPage = () => {
     let navigate = useNavigate();
-    const {contract, userAddress} = useContract();
     const [rooms, setRooms] = useState([]);
     const [rentDurations, setRentDurations] = useState({});
     const [loading, setLoading] = useState(false);
     const [userRental, setUserRental] = useState(null);
+
+    let [contract] = useState(null);
+    const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
+
+    if (!contract) {
+        contract = createContractInstance(getWeb3(), contractAddress);
+    }
 
     const fetchRoomDetails = async () => {
         setLoading(true);
@@ -49,7 +55,7 @@ const RentPage = () => {
 
     useEffect(() => {
         fetchRoomDetails();
-    }, [contract, userAddress]);
+    }, [userAddress]);
 
     const handleRentRoom = async (roomId, monthPrice) => {
         if (!contract || !userAddress) {

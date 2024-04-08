@@ -9,7 +9,8 @@ import {ContractProvider} from "./ContractContext/ContractContext";
 import ListRoomPage from "./RoomPage/ListRoomPage";
 import RentPage from "./RentPage/RentPage";
 import AppointmentPage from "./AppointmentPage/AppointmentPage";
-import YourRentalPage from "./YourRentalPage/YourRentalPage";
+import YourRentalPage from "./YourPage/YourRentalPage";
+import YourAppointmentPage from "./YourPage/YourAppointmentPage";
 
 const App = () => {
     return (
@@ -25,6 +26,7 @@ const App = () => {
                     <Route path="/rent" element={<RentPage/>}/>
                     <Route path="/appointments" element={<AppointmentPage/>}/>
                     <Route path="/your-rental" element={<YourRentalPage/>}/>
+                    <Route path="/your-appointments" element={<YourAppointmentPage/>}/>
                 </Routes>
             </ContractProvider>
         </Router>

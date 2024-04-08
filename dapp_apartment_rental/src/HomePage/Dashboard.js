@@ -1,16 +1,13 @@
 import React from 'react';
-import {Button} from 'reactstrap';
-import {useLocation, useNavigate} from 'react-router-dom';
-import {useContract} from "../ContractContext/ContractContext";
+import { Button } from 'reactstrap';
+import { useNavigate } from 'react-router-dom';
+import { useContract } from "../ContractContext/ContractContext";
 
-const Dashboard = ({}) => {
+const Dashboard = () => {
     let navigate = useNavigate();
-    // Retrieve the current user's data from localStorage
-    const location = useLocation();
-    // Retrieve the state passed from the AuthPage
-    const {userAddress} = useContract();
+    const { userAddress } = useContract();
     const authUser = JSON.parse(localStorage.getItem(userAddress));
-    const userName = authUser ? authUser.username : 'Guest';
+    const userName = authUser ? authUser.serverUserName : 'Guest';
 
     return (
         <div className="dashboard">
@@ -20,7 +17,8 @@ const Dashboard = ({}) => {
             <Button color="primary" onClick={() => navigate('/rent')}>Rent</Button>{' '}
             <Button color="primary" onClick={() => navigate('/list')}>List</Button>{' '}
             <Button color="primary" onClick={() => navigate('/appointments')}>Appointments</Button>{' '}
-            <Button color="primary" onClick={() => navigate('/your-rental')}>Your Rental</Button>
+            <Button color="primary" onClick={() => navigate('/your-rental')}>Your Rental</Button>{' '}
+            <Button color="primary" onClick={() => navigate('/your-appointments')}>Your Appointments</Button>
         </div>
     );
 };
