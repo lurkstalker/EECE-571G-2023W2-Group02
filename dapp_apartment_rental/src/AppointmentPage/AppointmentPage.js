@@ -4,10 +4,14 @@ import {useNavigate} from 'react-router-dom';
 import {useContract} from "../ContractContext/ContractContext";
 
 
+
+
 const AppointmentsPage = () => {
     let navigate = useNavigate();
     const [roomId, setRoomId] = useState('');
     const {contract, userAddress} = useContract();
+
+
 
     const makeAppointment = async () => {
 
@@ -62,10 +66,11 @@ const AppointmentsPage = () => {
                 return;
             }
 
-            // if(userAddress == roomStatus.owner){
-            //     alert("Room owner cannot make an appointment himself/herself");
-            //     return;
-            // }
+            const appointmentDetails = await contract.methods.getAppointmentDetails(roomId).call({from: userAddress});
+            if((userAddress.toLowerCase() !== appointmentDetails.renteeAddr.toLowerCase()) && (userAddress.toLowerCase() !== appointmentDetails.renterAddr.toLowerCase())){
+                alert("Only roomowner and rentee could cancel the appointment!");
+                return;
+            }
 
             await contract.methods.deleteAppointment(roomId).send({from: userAddress});
             localStorage.removeItem(userAddress);
