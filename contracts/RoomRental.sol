@@ -180,9 +180,9 @@ contract RoomRental {
 
     // Getter function for appointment details
     function getAppointmentDetails(
-        uint256 appointmentId
+        uint256 roomId
     ) public view checkLogin returns (Appointment memory) {
-        Appointment memory appt = appointments[appointmentId];
+        Appointment memory appt = appointments[roomId];
         return appt;
     }
 

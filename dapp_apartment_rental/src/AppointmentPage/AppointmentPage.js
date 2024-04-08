@@ -4,14 +4,15 @@ import {useNavigate} from 'react-router-dom';
 import {useContract} from "../ContractContext/ContractContext";
 
 
-
-
 const AppointmentsPage = () => {
     let navigate = useNavigate();
     const [roomId, setRoomId] = useState('');
-    const {contract, userAddress} = useContract();
+    let [contract] = useState(null);
+    const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
 
-
+    if (!contract) {
+        contract = createContractInstance(getWeb3(), contractAddress);
+    }
 
     const makeAppointment = async () => {
 
@@ -67,7 +68,7 @@ const AppointmentsPage = () => {
             }
 
             const appointmentDetails = await contract.methods.getAppointmentDetails(roomId).call({from: userAddress});
-            if((userAddress.toLowerCase() !== appointmentDetails.renteeAddr.toLowerCase()) && (userAddress.toLowerCase() !== appointmentDetails.renterAddr.toLowerCase())){
+            if ((userAddress.toLowerCase() !== appointmentDetails.renteeAddr.toLowerCase()) && (userAddress.toLowerCase() !== appointmentDetails.renterAddr.toLowerCase())) {
                 alert("Only roomowner and rentee could cancel the appointment!");
                 return;
             }

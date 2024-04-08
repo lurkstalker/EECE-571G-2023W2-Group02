@@ -7,7 +7,13 @@ const ListRoomPage = () => {
     const [intro, setIntro] = useState('');
     const [price, setPrice] = useState('');
     const [roomIdToDelete, setRoomIdToDelete] = useState('');
-    const { contract, userAddress } = useContract();
+
+    let [contract] = useState(null);
+    const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
+
+    if (!contract) {
+        contract = createContractInstance(getWeb3(), contractAddress);
+    }
 
     const handleAddRoom = async () => {
         if (!contract) {
