@@ -43,7 +43,7 @@ const YourRentalPage = () => {
         if (contract && userAddress) {
             fetchInfo();
         }
-    }, []);
+    }, [isOwner]);
 
     const handleAction = async (action) => {
         if (!contract || !userAddress) return;
