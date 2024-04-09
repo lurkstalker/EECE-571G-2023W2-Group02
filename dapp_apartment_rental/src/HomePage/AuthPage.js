@@ -1,25 +1,25 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Col, Container, Row} from 'reactstrap';
 import {useNavigate} from 'react-router-dom';
-import {useContract} from '../ContractContext/ContractContext';
+import {useContract} from "../ContractContext/ContractContext";
 
 const AuthPage = () => {
     const navigate = useNavigate();
-
-    // Retrieve the state passed from the HomePage
-    const {contract, userAddress} = useContract();
-    const [totalRoomCount, setTotalRoomCount] = useState(0);  // State to store the total room count
+    // State to store the total room count
+    const [totalRoomCount, setTotalRoomCount] = useState(0);
+    const {createContractInstance, getWeb3, contractAddress} = useContract();
+    const contract = createContractInstance(getWeb3(), contractAddress);
 
     useEffect(() => {
         const fetchTotalRoomCount = async () => {
+            // Retrieve the state passed from the HomePage
             if (contract) {
                 const count = await contract.methods.getTotalRoomCount().call();
                 setTotalRoomCount(count);
             }
         };
-
         fetchTotalRoomCount();
-    }, [contract]);  // Effect runs when the rentalContract is set
+    }, [contractAddress]);  // Effect runs when the rentalContract is set
 
     const goToSignUp = () => {
         navigate('/signup');

@@ -7,9 +7,8 @@ const SignUpPage = () => {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-
-    let [contract, setContract] = useState(null);
     const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
+    const contract = createContractInstance(getWeb3(), contractAddress);
 
     const handleSignUp = async () => {
         if (!userAddress) {
@@ -23,16 +22,12 @@ const SignUpPage = () => {
             return;
         }
 
-        if (!contract) {
-            contract = createContractInstance(getWeb3(), contractAddress);
-        }
-
         if (contract) {
-            alert(userAddress)
             const userStatus = await contract.methods.getUserStatus().call({from: userAddress})
             const isUserHasSignUp = userStatus.isValid;
             const isUserHasLogin = userStatus.loggedIn;
-            alert("User sign up state is " + isUserHasSignUp + "\n" + "login in state is " + isUserHasLogin);
+            alert(`User sign up state is ${isUserHasSignUp}
+login in state is ${isUserHasLogin}`);
             if (!isUserHasSignUp) {
                 await contract.methods.userSignUp(username, password).send({from: userAddress});
                 alert('Sign up Successfully!');

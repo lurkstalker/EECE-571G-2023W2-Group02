@@ -5,13 +5,8 @@ import {useContract} from '../ContractContext/ContractContext';
 const YourAppointmentPage = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(false);
-
-    let [contract] = useState(null);
     const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
-
-    if (!contract) {
-        contract = createContractInstance(getWeb3(), contractAddress);
-    }
+    const contract = createContractInstance(getWeb3(), contractAddress);
 
     useEffect(() => {
         const fetchAppointment = async () => {

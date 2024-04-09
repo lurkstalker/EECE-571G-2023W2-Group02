@@ -17,7 +17,12 @@ export const ContractProvider = ({children}) => {
 
     // Create a memoized function to get a web3 instance
     const getWeb3 = () => {
-        return new Web3(Web3.givenProvider);
+        if (Web3.givenProvider == null) {
+            // Create a Web3 instance
+            return new Web3(window.ethereum);
+        } else {
+            return new Web3(Web3.givenProvider);
+        }
     };
 
     // You can now use getWeb3 and createContractInstance when you need to interact with the contract

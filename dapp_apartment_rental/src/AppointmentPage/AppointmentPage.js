@@ -7,12 +7,8 @@ import {useContract} from "../ContractContext/ContractContext";
 const AppointmentsPage = () => {
     let navigate = useNavigate();
     const [roomId, setRoomId] = useState('');
-    let [contract] = useState(null);
     const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
-
-    if (!contract) {
-        contract = createContractInstance(getWeb3(), contractAddress);
-    }
+    const contract = createContractInstance(getWeb3(), contractAddress);
 
     const makeAppointment = async () => {
 
@@ -22,7 +18,6 @@ const AppointmentsPage = () => {
         }
 
         if (contract) {
-            alert(userAddress)
             let roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).call({from: userAddress});
             if (roomAppointStatus) {
                 alert("There is an existing appointment for this room!");
@@ -48,9 +43,6 @@ const AppointmentsPage = () => {
                 alert("Appointment successful!");
             }
         }
-
-
-        // Clear form or provide some success message
     };
 
     const deleteAppointment = async () => {
@@ -60,7 +52,6 @@ const AppointmentsPage = () => {
         }
 
         if (contract) {
-            alert(userAddress)
             let roomAppointStatus = await contract.methods.checkAppointmentStatus(roomId).call({from: userAddress});
             if (!roomAppointStatus) {
                 alert("There is no appointment for this room!");
@@ -69,7 +60,7 @@ const AppointmentsPage = () => {
 
             const appointmentDetails = await contract.methods.getAppointmentDetails(roomId).call({from: userAddress});
             if ((userAddress.toLowerCase() !== appointmentDetails.renteeAddr.toLowerCase()) && (userAddress.toLowerCase() !== appointmentDetails.renterAddr.toLowerCase())) {
-                alert("Only roomowner and rentee could cancel the appointment!");
+                alert("Only room owner and rentee could cancel the appointment!");
                 return;
             }
 

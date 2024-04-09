@@ -8,23 +8,14 @@ const RentPage = () => {
     const [rooms, setRooms] = useState([]);
     const [rentDurations, setRentDurations] = useState({});
     const [loading, setLoading] = useState(false);
-    const [userRental, setUserRental] = useState(null);
-
-    let [contract] = useState(null);
     const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
-
-    if (!contract) {
-        contract = createContractInstance(getWeb3(), contractAddress);
-    }
+    const contract = createContractInstance(getWeb3(), contractAddress);
 
     const fetchRoomDetails = async () => {
         setLoading(true);
         try {
             const allRooms = await contract.methods.getAllRooms().call();
             const userRentalInfo = await contract.methods.getRenterRentalInfo().call({from: userAddress});
-
-            setUserRental(userRentalInfo.isValid ? userRentalInfo : null);
-
             let enrichedRooms = await Promise.all(allRooms.map(async room => {
                 const rentalInfo = await contract.methods.getRoomRentalInfo(room.roomId).call();
                 return {
@@ -54,8 +45,9 @@ const RentPage = () => {
     };
 
     useEffect(() => {
-        fetchRoomDetails();
-    }, [userAddress]);
+        fetchRoomDetails().then(r => {
+        });
+    }, [contractAddress]);
 
     const handleRentRoom = async (roomId, monthPrice) => {
         if (!contract || !userAddress) {
