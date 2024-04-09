@@ -7,9 +7,8 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-
-    let [contract, setContract] = useState(null);
     const {userAddress, createContractInstance, getWeb3, contractAddress} = useContract();
+    const contract = createContractInstance(getWeb3(), contractAddress);
 
     const handleLogin = async () => {
         if (!userAddress) {
@@ -17,14 +16,9 @@ const LoginPage = () => {
             return;
         }
 
-        // Basic validation
         if (!password) {
             alert('Please fill in all fields.');
             return;
-        }
-
-        if (!contract) {
-            contract = createContractInstance(getWeb3(), contractAddress);
         }
 
         if (contract) {
@@ -32,7 +26,8 @@ const LoginPage = () => {
             const isUserHasSignUp = userStatus.isValid;
             const isUserHasLogin = userStatus.loggedIn;
             const serverUserName = userStatus.userName;
-            alert("User sign up state is " + isUserHasSignUp + "\n" + "login in state is " + isUserHasLogin);
+            alert(`User sign up state is ${isUserHasSignUp}
+login in state is ${isUserHasLogin}`);
             if (!isUserHasSignUp) {
                 alert("You need to sign up firstly");
             } else {
