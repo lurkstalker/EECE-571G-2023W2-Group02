@@ -19,6 +19,7 @@ const Dashboard = () => {
             <Button color="primary" onClick={() => navigate('/appointments')}>Appointments</Button>{' '}
             <Button color="primary" onClick={() => navigate('/your-rental')}>Your Rental</Button>{' '}
             <Button color="primary" onClick={() => navigate('/your-appointments')}>Your Appointments</Button>
+            <Button color="primary" onClick={() => navigate('/auth')}>Log Out</Button>
         </div>
     );
 };
